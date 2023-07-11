@@ -15,7 +15,13 @@ add_subdirectory(external)
 
 # Add source to this project's executable.
 add_executable (DerbyStats "DerbyStats.cpp" "DerbyStats.h")
-target_link_libraries(DerbyStats libuv "zlibstaticd.lib" uWebSockets)
+target_link_libraries(DerbyStats libuv uWebSockets)
+
+if (CMAKE_BUILD_TYPE EQUAL "DEBUG")
+	target_link_libraries(DerbyStats "zlibstaticd.lib")
+else (CMAKE_BUILD_TYPE EQUAL "DEBUG")
+	target_link_libraries(DerbyStats "zlibstatic.lib")
+endif (CMAKE_BUILD_TYPE EQUAL "DEBUG")
 
 get_property(libuv_dir GLOBAL PROPERTY LIBUV_LIB_DIR)
 get_property(zlib_dir GLOBAL PROPERTY ZLIB_LIB_DIR)
