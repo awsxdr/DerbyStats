@@ -39,11 +39,6 @@ include_directories(
 	"${zlib_BINARY_DIR}"
 )
 
-execute_process(COMMAND cd ui)
-execute_process(COMMAND npm ci)
-execute_process(COMMAND npm run build)
-execute_process(COMMAND cd ..)
-
 file(COPY "ui/dist/" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/ui")
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
