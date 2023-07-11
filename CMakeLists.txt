@@ -17,11 +17,12 @@ add_subdirectory(external)
 add_executable (DerbyStats "DerbyStats.cpp" "DerbyStats.h")
 target_link_libraries(DerbyStats libuv uWebSockets)
 
-if (CMAKE_BUILD_TYPE EQUAL "DEBUG")
+message("Build Type: ${CMAKE_BUILD_TYPE}")
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
 	target_link_libraries(DerbyStats "zlibstaticd.lib")
-else (CMAKE_BUILD_TYPE EQUAL "DEBUG")
+else (CMAKE_BUILD_TYPE STREQUAL "Debug")
 	target_link_libraries(DerbyStats "zlibstatic.lib")
-endif (CMAKE_BUILD_TYPE EQUAL "DEBUG")
+endif (CMAKE_BUILD_TYPE STREQUAL "Debug")
 
 get_property(libuv_dir GLOBAL PROPERTY LIBUV_LIB_DIR)
 get_property(zlib_dir GLOBAL PROPERTY ZLIB_LIB_DIR)
@@ -37,6 +38,11 @@ include_directories(
 	"${zlib_SOURCE_DIR}"
 	"${zlib_BINARY_DIR}"
 )
+
+execute_process(COMMAND cd ui)
+execute_process(COMMAND npm ci)
+execute_process(COMMAND npm run build)
+execute_process(COMMAND cd ..)
 
 file(COPY "ui/dist/" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/ui")
 
