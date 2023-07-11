@@ -17,5 +17,6 @@ file(GLOB_RECURSE SOURCES ${usockets_content_SOURCE_DIR}/src/*.c)
 add_library(uSockets ${SOURCES})
 
 include_directories("${libuv_SOURCE_DIR}/include")
+target_link_libraries(uSockets libuv)
 target_include_directories(uSockets PUBLIC ${usockets_content_SOURCE_DIR}/src)
 target_compile_definitions(uSockets PRIVATE LIBUS_NO_SSL)
