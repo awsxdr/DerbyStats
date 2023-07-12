@@ -8,6 +8,7 @@ using namespace std;
 
 constexpr int port = 8001;
 
+string_view get_content_type_for_file_extension(const filesystem::path file_extension);
 bool is_parent_path(filesystem::path parent_path, filesystem::path path);
 
 int main()
@@ -42,6 +43,9 @@ int main()
 			stringstream buffer;
 			
 			buffer << file_stream.rdbuf();
+
+			response->writeHeader("Content-Type", get_content_type_for_file_extension(request_path.extension()));
+
 			response->end(buffer.str());
 		})
 		.listen(port, [](const auto* listen_socket)
@@ -54,6 +58,20 @@ int main()
 		.run();
 
 	return 0;
+}
+
+string_view get_content_type_for_file_extension(const filesystem::path file_extension)
+{
+	if (file_extension == ".html" || file_extension == ".htm")
+		return "text/html";
+
+	if (file_extension == ".css")
+		return "text/css";
+
+	if (file_extension == ".js")
+		return "text/javascript";
+
+	return "text/plain";
 }
 
 bool is_parent_path(const filesystem::path parent_path, const filesystem::path path)

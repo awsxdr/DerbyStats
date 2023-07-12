@@ -12,4 +12,3 @@ FetchContent_MakeAvailable(libuv_content)
 # target_include_directories(libuv INTERFACE ${libuv_content_SOURCE_DIR}/include/)
 
 set_property(GLOBAL PROPERTY LIBUV_LIB_DIR "${libuv_content_BINARY_DIR}")
-#set_property(GLOBAL PROPERTY LIBUV_LIB_DIR "Test")
