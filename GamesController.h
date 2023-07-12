@@ -1,4 +1,3 @@
-namespace derby_stats
-{
-	
-}
+#pragma once
+
+#include "ScoreboardConnector.h"

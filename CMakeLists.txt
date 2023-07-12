@@ -14,7 +14,7 @@ project ("DerbyStats" LANGUAGES C CXX)
 add_subdirectory(external)
 
 # Add source to this project's executable.
-add_executable (DerbyStats "DerbyStats.cpp" "DerbyStats.h"  "FileServe.h" "GamesController.h")
+add_executable (DerbyStats "DerbyStats.cpp" "DerbyStats.h"  "FileServe.h" "GamesController.h" "ScoreboardConnector.h" "ScoreboardConnector.cpp" "Exceptions.h")
 message("Build Type: ${CMAKE_BUILD_TYPE}")
 target_link_libraries(DerbyStats uWebSockets)
 
@@ -39,6 +39,7 @@ if(WIN32)
 endif (WIN32)
 
 include_directories(
+	websocketpp
 	"${libuv_SOURCE_DIR}/include"
 	"${zlib_SOURCE_DIR}"
 	"${zlib_BINARY_DIR}"

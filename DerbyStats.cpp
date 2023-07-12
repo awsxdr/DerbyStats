@@ -1,5 +1,7 @@
 ﻿#include "DerbyStats.h"
 #include "FileServe.h"
+#include "GamesController.h"
+
 #include <App.h>
 #include <fstream>
 #include <filesystem>
