@@ -1,6 +1,7 @@
 # https://stackoverflow.com/questions/75777485/integrating-uwebsockets-into-a-cmake-project
 
-cmake_minimum_required(VERSION 3.24)
+cmake_minimum_required (VERSION 3.8)
+
 include(FetchContent)
 FetchContent_Declare(
   uwebsockets_content

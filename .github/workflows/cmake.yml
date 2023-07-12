@@ -20,7 +20,7 @@ jobs:
       run: cmake -B ${{github.workspace}}/build -G "Ninja" -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
     - name: Build UI
-      run: cd ui & npm ci & npm run build & cd ..
+      run: cd ui & npm ci & npm run build && xcopy /Y .\dist\* ..\build\ui\ & cd ..
 
     - name: Build
       run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
@@ -40,7 +40,7 @@ jobs:
       run: cmake -B ${{github.workspace}}/build -G "Ninja" -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
     - name: Build UI
-      run: cd ui & npm ci & npm run build & cd ..
+      run: cd ui & npm ci & npm run build & cp ./dist/* ../build/ui/ & cd ..
 
     - name: Build
       run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
