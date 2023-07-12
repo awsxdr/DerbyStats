@@ -21,7 +21,7 @@ jobs:
       run: cmake -B ${{github.workspace}}/build -G "Ninja" -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_C_COMPILER:STRING="cl.exe" -DCMAKE_CXX_COMPILER:STRING="cl.exe"
 
     - name: Build UI
-      run: cd ui & npm ci & npm run build && xcopy /Y .\dist\* ..\build\ui\ & cd ..
+      run: cd ui & npm ci & npm run build && xcopy /Y .\dist\* ${{github.workspace}}\build\ & cd ..
 
     - name: Build
       run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
@@ -29,6 +29,12 @@ jobs:
     - name: Test
       working-directory: ${{github.workspace}}/build
       run: ctest -C ${{env.BUILD_TYPE}}
+
+    - name: Archite artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: build-windows
+        path: ${{github.workspace}}/build
 
   build-linux:
     runs-on: ubuntu-latest
@@ -41,7 +47,7 @@ jobs:
       run: cmake -B ${{github.workspace}}/build -G "Ninja" -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
     - name: Build UI
-      run: cd ui & npm ci & npm run build & cp ./dist/* ../build/ui/ & cd ..
+      run: cd ui & npm ci & npm run build & cp ./dist/* ${{github.workspace}}/build/ui/ & cd ..
 
     - name: Build
       run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
@@ -49,4 +55,10 @@ jobs:
     - name: Test
       working-directory: ${{github.workspace}}/build
       run: ctest -C ${{env.BUILD_TYPE}}
+
+    - name: Archite artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: build-linux
+        path: ${{github.workspace}}/build
 
