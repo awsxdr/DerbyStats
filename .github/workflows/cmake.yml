@@ -30,7 +30,7 @@ jobs:
       working-directory: ${{github.workspace}}/build
       run: ctest -C ${{env.BUILD_TYPE}}
 
-    - name: Archite artifacts
+    - name: Archive artifacts
       uses: actions/upload-artifact@v3
       with:
         name: build-windows
@@ -56,7 +56,7 @@ jobs:
       working-directory: ${{github.workspace}}/build
       run: ctest -C ${{env.BUILD_TYPE}}
 
-    - name: Archite artifacts
+    - name: Archive artifacts
       uses: actions/upload-artifact@v3
       with:
         name: build-linux
