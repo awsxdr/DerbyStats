@@ -14,7 +14,7 @@ project ("DerbyStats" LANGUAGES C CXX)
 add_subdirectory(external)
 
 # Add source to this project's executable.
-add_executable (DerbyStats "DerbyStats.cpp" "DerbyStats.h")
+add_executable (DerbyStats "DerbyStats.cpp" "DerbyStats.h"  "FileServe.h" "GamesController.h")
 message("Build Type: ${CMAKE_BUILD_TYPE}")
 target_link_libraries(DerbyStats uWebSockets)
 
