@@ -20,17 +20,21 @@ add_subdirectory(external)
 
 target_link_libraries(DerbyStats uWebSockets asio)
 
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+	add_compile_definitions("DEBUG")
+endif()
+
 if (WIN32)
 	target_link_libraries(DerbyStats libuv)
 	if (CMAKE_BUILD_TYPE STREQUAL "Debug")
 		target_link_libraries(DerbyStats "zlibstaticd.lib")
-	else (CMAKE_BUILD_TYPE STREQUAL "Debug")
+	else ()
 		target_link_libraries(DerbyStats "zlibstatic.lib")
-	endif (CMAKE_BUILD_TYPE STREQUAL "Debug")
+	endif ()
 	set_property(TARGET DerbyStats PROPERTY COMPILE_OPTIONS "/Zc:__cplusplus")
-else (WIN32)
+else ()
 	target_link_libraries(DerbyStats z uv "libz.a" "libuv.a")
-endif (WIN32)
+endif ()
 
 get_property(libuv_dir GLOBAL PROPERTY LIBUV_LIB_DIR)
 get_property(zlib_dir GLOBAL PROPERTY ZLIB_LIB_DIR)
@@ -41,8 +45,6 @@ target_link_directories(DerbyStats PUBLIC "${libuv_dir}" "${zlib_dir}")
 if(WIN32)
 	target_link_libraries(DerbyStats "Ws2_32.lib" "Dbghelp.lib" "Iphlpapi.lib" "Userenv.lib")
 endif (WIN32)
-
-message("TEEST: ${cxxopts_SOURCE_DIR}/include")
 
 include_directories(
 	websocketpp

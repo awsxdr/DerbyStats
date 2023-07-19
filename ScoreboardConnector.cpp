@@ -1,4 +1,5 @@
 #include "ScoreboardConnector.h"
+#include "Logger.hpp"
 #include "Exceptions.h"
 
 #include <websocketpp/config/asio_no_tls_client.hpp>
@@ -18,6 +19,8 @@ unique_ptr<ScoreboardConnector> ScoreboardConnector::create()
 
 unique_ptr<ScoreboardConnector> DisconnectedScoreboardConnector::connect(string url)
 {
+	Logger::log_info("Connecting to websocket endpoint {}", url);
+
 	return std::unique_ptr<ConnectedScoreboardConnector>(new ConnectedScoreboardConnector(url));
 }
 
@@ -26,11 +29,43 @@ unique_ptr<ScoreboardConnector> ConnectedScoreboardConnector::connect(string url
 	throw AlreadyConnectedException();
 }
 
+websocketpp::log::level get_socket_level_for_logging_level(LOG_LEVEL log_level)
+{
+	switch(log_level)
+	{
+	case LOG_LEVEL_FATAL:
+	case LOG_LEVEL_ERROR:
+	case LOG_LEVEL_WARN:
+		return websocketpp::log::alevel::fail;
+
+	case LOG_LEVEL_INFO:
+		return
+			websocketpp::log::alevel::fail
+			| websocketpp::log::alevel::connect
+			| websocketpp::log::alevel::disconnect;
+
+	case LOG_LEVEL_DEBUG:
+		return
+			websocketpp::log::alevel::fail
+			| websocketpp::log::alevel::connect
+			| websocketpp::log::alevel::disconnect
+			| websocketpp::log::alevel::debug_close
+			| websocketpp::log::alevel::debug_handshake;
+
+	case LOG_LEVEL_TRACE:
+		return websocketpp::log::alevel::all;
+
+	default:
+		return websocketpp::log::alevel::none;
+	}
+}
+
 ConnectedScoreboardConnector::ConnectedScoreboardConnector(string url)
 {
 	this->socket = std::make_unique<websocket_client>();
 	this->socket->clear_access_channels(websocketpp::log::alevel::all);
-	this->socket->set_access_channels(websocketpp::log::alevel::all);
+
+	this->socket->set_access_channels(get_socket_level_for_logging_level(Logger::get_log_level()));
 
 	this->socket->init_asio();
 
@@ -48,7 +83,7 @@ ConnectedScoreboardConnector::ConnectedScoreboardConnector(string url)
 			}
 			catch (websocketpp::exception const& ex)
 			{
-				cout << "ERROR:" << ex.what() << endl;
+				Logger::log_error("Exception opening websocket connection: {}", ex.what());
 			}
 		});
 
@@ -57,11 +92,8 @@ ConnectedScoreboardConnector::ConnectedScoreboardConnector(string url)
 
 	this->socket->connect(connection);
 
-	//this->socket->start_perpetual();
-	
-	this->socket->run();
-	//thread([this]()
-	//	{
-	//		this->socket->run();
-	//	});
+	this->run_thread = thread([this]()
+		{
+			this->socket->run();
+		});
 }

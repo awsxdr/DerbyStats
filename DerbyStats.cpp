@@ -1,6 +1,7 @@
 ﻿#include "DerbyStats.h"
 #include "FileServe.h"
 #include "GamesController.h"
+#include "Logger.hpp"
 
 #include <App.h>
 #include <filesystem>
@@ -16,6 +17,8 @@ int main(int argument_count, char** arguments)
 	auto const serve_path = filesystem::absolute(filesystem::current_path().concat("/ui"));
 
 	auto const [ port, scoreboard_url ] = parse_options(argument_count, arguments);
+
+	Logger::set_log_level(LOG_LEVEL_ERROR);
 
 	auto const scoreboard_connector = 
 		ScoreboardConnector::create()

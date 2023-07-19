@@ -34,6 +34,7 @@ namespace derby_stats
 	{
 	private:
 		unique_ptr<websocket_client> socket;
+		thread run_thread;
 
 		ConnectedScoreboardConnector(string url);
 
