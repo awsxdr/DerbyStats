@@ -31,7 +31,7 @@ namespace derby_stats::file_serve
 
 			if (!request_path.has_filename() || !filesystem::exists(request_path))
 			{
-				request_path = "ui/index.html";
+				request_path += "index.html";
 			}
 
 			response->writeHeader("Content-Type", get_content_type_for_file_extension(request_path.extension()));
@@ -54,10 +54,9 @@ namespace derby_stats::file_serve
 
 	inline tuple<bool, path> get_request_file_path(const path& serve_path, const string_view& url)
 	{
-		string_view local_url;
-		copy(url, local_url);
-
-		while (url.starts_with('/'))
+		auto local_url = url;
+		
+		while (local_url.starts_with('/'))
 			local_url.remove_prefix(1);
 
 		auto const url_string = string("ui/").append(local_url);
