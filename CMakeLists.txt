@@ -12,7 +12,7 @@ endif()
 project ("DerbyStats" LANGUAGES C CXX)
 
 # Add source to this project's executable.
-add_executable (DerbyStats "DerbyStats.cpp" "DerbyStats.h"  "FileServe.h" "GamesController.h" "ScoreboardConnector.h" "ScoreboardConnector.cpp" "Exceptions.h")
+add_executable (DerbyStats "DerbyStats.cpp" "DerbyStats.h"  "FileServe.h" "api/GamesController.h" "ScoreboardConnector.h" "ScoreboardConnector.cpp" "Exceptions.h" "GameStateStore.cpp" "api/GamesController.cpp" "api/ApiController.h" "GameStateStore.h")
 
 set_property(TARGET DerbyStats PROPERTY CXX_STANDARD 20)
 
@@ -39,6 +39,7 @@ endif ()
 get_property(libuv_dir GLOBAL PROPERTY LIBUV_LIB_DIR)
 get_property(zlib_dir GLOBAL PROPERTY ZLIB_LIB_DIR)
 get_property(asio_dir GLOBAL PROPERTY ASIO_INCLUDE_DIR)
+get_property(json_dir GLOBAL PROPERTY JSON_SOURCE_DIR)
 
 target_link_directories(DerbyStats PUBLIC "${libuv_dir}" "${zlib_dir}")
 
@@ -54,6 +55,7 @@ include_directories(
 	"${websocketpp_SOURCE_DIR}"
 	"${asio_dir}/asio/include"
 	"${cxxopts_SOURCE_DIR}/include"
+	"${json_dir}/include"
 )
 
 # TODO: Add tests and install targets if needed.
