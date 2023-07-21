@@ -4,10 +4,17 @@
 
 namespace derby_stats
 {
+	struct skater
+	{
+		string name = "";
+		string number = "";
+	};
+
 	struct team
 	{
 		string name = "";
 		int score = 0;
+		map<string, skater> skaters;
 	};
 
 	struct game_state

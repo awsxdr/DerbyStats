@@ -6,9 +6,9 @@
 
 using namespace derby_stats::api;
 
-GamesController::GamesController(unique_ptr<GameStateStore>& state_store)
+GamesController::GamesController(const shared_ptr<GameStateStore>& state_store)
 {
-	this->state_store = move(state_store);
+	this->state_store = state_store;
 }
 
 vector<handler_definition> GamesController::get_handlers()
@@ -19,7 +19,7 @@ vector<handler_definition> GamesController::get_handlers()
 	};
 }
 
-string GamesController::get_game_state()
+string GamesController::get_game_state() const
 {
 	auto const state = this->state_store->get_state();
 

@@ -6,11 +6,11 @@
 
 #include <vector>
 
-using namespace std;
-
 namespace derby_stats::api
 {
-	class GamesController : public ApiController
+	using namespace std;
+
+	class RostersController : public ApiController
 	{
 	private:
 		shared_ptr<GameStateStore> state_store;
@@ -19,8 +19,8 @@ namespace derby_stats::api
 		vector<handler_definition> get_handlers() override;
 
 	public:
-		GamesController(const shared_ptr<GameStateStore>& state_store);
+		RostersController(const shared_ptr<GameStateStore>& state_store);
 
-		string get_game_state() const;
+		string get_rosters() const;
 	};
 }

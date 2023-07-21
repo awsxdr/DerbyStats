@@ -2,6 +2,7 @@
 #include "FileServe.h"
 #include "ScoreboardConnector.h"
 #include "api/GamesController.h"
+#include "api/RostersController.h"
 #include "Logger.hpp"
 
 #include <App.h>
@@ -41,10 +42,13 @@ int main(const int argument_count, char** arguments)
 				}
 			});
 
-	auto state_store = make_unique<GameStateStore>(scoreboard_connector);
+	auto const state_store = make_shared<GameStateStore>(scoreboard_connector);
 
 	auto games_controller = api::GamesController(state_store);
 	games_controller.init_endpoints(app);
+
+	auto rosters_controller = api::RostersController(state_store);
+	rosters_controller.init_endpoints(app);
 
 	app.run();
 

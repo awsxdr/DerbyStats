@@ -12,7 +12,7 @@ endif()
 project ("DerbyStats" LANGUAGES C CXX)
 
 # Add source to this project's executable.
-add_executable (DerbyStats "DerbyStats.cpp" "DerbyStats.h"  "FileServe.h" "api/GamesController.h" "ScoreboardConnector.h" "ScoreboardConnector.cpp" "Exceptions.h" "GameStateStore.cpp" "api/GamesController.cpp" "api/ApiController.h" "GameStateStore.h")
+add_executable (DerbyStats "DerbyStats.cpp" "DerbyStats.h"  "FileServe.h" "api/GamesController.h" "ScoreboardConnector.h" "ScoreboardConnector.cpp" "Exceptions.h" "GameStateStore.cpp" "api/GamesController.cpp" "api/ApiController.h" "GameStateStore.h" "api/RostersController.h" "api/RostersController.cpp")
 
 set_property(TARGET DerbyStats PROPERTY CXX_STANDARD 20)
 
