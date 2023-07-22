@@ -1,15 +1,16 @@
 #pragma once
 
 #include "../ScoreboardConnector.h"
-#include "../GameStateStore.h"
+#include "../state_stores/GameStateStore.h"
 #include "ApiController.h"
 
 #include <vector>
 
-using namespace std;
-
 namespace derby_stats::api
 {
+	using namespace std;
+	using namespace state_stores;
+
 	class GamesController : public ApiController
 	{
 	private:

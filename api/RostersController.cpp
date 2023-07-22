@@ -1,22 +1,17 @@
 #include "RostersController.h"
-#include "../GameStateStore.h"
+#include "../state_stores/RostersStateStore.h"
 
 #include <vector>
 #include <string>
 #include <nlohmann/json.hpp>
 
 using namespace derby_stats;
-using namespace derby_stats::api;
+using namespace api;
+using namespace state_stores;
 
 using json = nlohmann::json;
 
-typedef struct
-{
-	string name;
-	string number;
-} roster_skater;
-
-RostersController::RostersController(const shared_ptr<GameStateStore>& state_store)
+RostersController::RostersController(const shared_ptr<RostersStateStore>& state_store)
 {
 	this->state_store = state_store;
 }
@@ -29,13 +24,17 @@ vector<handler_definition> RostersController::get_handlers()
 	};
 }
 
-json map_skaters(const map<string, skater>& skaters)
+json map_skaters(const map<string, roster_skater>& skaters)
 {
 	vector<json> result;
 
-	for(const auto& [name, number] : skaters | views::values)
+	for(const auto& [id, name, number] : skaters | views::values)
 	{
-		result.push_back({ name, number });
+		result.push_back({ 
+			{ "id", id },
+			{ "name", name },
+			{ "number", number }
+		});
 	}
 
 	return result;

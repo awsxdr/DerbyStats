@@ -1,10 +1,11 @@
 #include "GamesController.h"
-#include "../GameStateStore.h"
+#include "../state_stores/GameStateStore.h"
 
 #include <vector>
 #include <string>
 
 using namespace derby_stats::api;
+using namespace derby_stats::state_stores;
 
 GamesController::GamesController(const shared_ptr<GameStateStore>& state_store)
 {

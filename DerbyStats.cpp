@@ -9,10 +9,12 @@
 #include <filesystem>
 #include <cxxopts.hpp>
 
-#include "GameStateStore.h"
+#include "state_stores/GameStateStore.h"
+#include "state_stores/RostersStateStore.h"
 
 using namespace std;
 using namespace derby_stats;
+using namespace state_stores;
 
 const string default_log_level = "error";
 const string default_port = "8001";
@@ -42,12 +44,12 @@ int main(const int argument_count, char** arguments)
 				}
 			});
 
-	auto const state_store = make_shared<GameStateStore>(scoreboard_connector);
-
-	auto games_controller = api::GamesController(state_store);
+	auto const game_state_store = make_shared<GameStateStore>(scoreboard_connector);
+	auto games_controller = api::GamesController(game_state_store);
 	games_controller.init_endpoints(app);
 
-	auto rosters_controller = api::RostersController(state_store);
+	auto const rosters_state_store = make_shared<RostersStateStore>(scoreboard_connector);
+	auto rosters_controller = api::RostersController(rosters_state_store);
 	rosters_controller.init_endpoints(app);
 
 	app.run();

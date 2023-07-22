@@ -24,7 +24,7 @@ namespace derby_stats
 	public:
 		virtual ~ScoreboardConnector() = default;
 
-		virtual unique_ptr<ScoreboardConnector> connect(string url) = 0;
+		virtual shared_ptr<ScoreboardConnector> connect(string url) = 0;
 		virtual void register_topic(string topic_name) = 0;
 		virtual void set_state_update_handler(state_update_handler handler);
 
@@ -37,7 +37,7 @@ namespace derby_stats
 		bool get_is_open() override;
 
 	public:
-		unique_ptr<ScoreboardConnector> connect(string url) override;
+		shared_ptr<ScoreboardConnector> connect(string url) override;
 		void register_topic(string topic_name) override;
 
 		friend class ConnectedScoreboardConnector;
@@ -60,7 +60,7 @@ namespace derby_stats
 		bool get_is_open() override;
 
 	public:
-		unique_ptr<ScoreboardConnector> connect(string url) override;
+		shared_ptr<ScoreboardConnector> connect(string url) override;
 		void register_topic(string topic_name) override;
 
 		friend class DisconnectedScoreboardConnector;

@@ -28,11 +28,11 @@ void ScoreboardConnector::set_state_update_handler(state_update_handler handler)
 	this->update_handler = move(handler);
 }
 
-unique_ptr<ScoreboardConnector> DisconnectedScoreboardConnector::connect(const string url)
+shared_ptr<ScoreboardConnector> DisconnectedScoreboardConnector::connect(const string url)
 {
 	Logger::log_info("Connecting to websocket endpoint {}", url);
 
-	return std::unique_ptr<ConnectedScoreboardConnector>(new ConnectedScoreboardConnector(url));
+	return std::shared_ptr<ConnectedScoreboardConnector>(new ConnectedScoreboardConnector(url));
 }
 
 bool DisconnectedScoreboardConnector::get_is_open()
@@ -45,7 +45,7 @@ void DisconnectedScoreboardConnector::register_topic(string)
 	throw NotConnectedException();
 }
 
-unique_ptr<ScoreboardConnector> ConnectedScoreboardConnector::connect(string)
+shared_ptr<ScoreboardConnector> ConnectedScoreboardConnector::connect(string)
 {
 	throw AlreadyConnectedException();
 }
