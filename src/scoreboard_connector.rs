@@ -1,5 +1,4 @@
-use serde_json::json;
-use serde::{Deserialize, Serialize};
+use serde_json::{json, Value};
 
 use websocket::{
     ClientBuilder,
@@ -8,6 +7,8 @@ use websocket::{
     Message,
     OwnedMessage
 };
+
+use serde::{Serialize, Deserialize};
 
 pub struct ScoreboardConnection {
     socket: Client<Box<dyn NetworkStream + Send>>
@@ -43,11 +44,12 @@ impl ScoreboardConnection {
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct ScoreboardMessage {
+pub struct StateUpdate {
+    pub state: Value,
 }
 
 impl Iterator for ScoreboardConnection {
-    type Item = ScoreboardMessage;
+    type Item = StateUpdate;
 
     fn next(&mut self) -> Option<Self::Item> {
         let message_result = self.socket.recv_message();
@@ -70,9 +72,7 @@ impl Iterator for ScoreboardConnection {
 
         println!("{}", message_text);
 
-        //let json_object: ScoreboardMessage = serde_json::from_str(message_text.as_str()).ok()?;
-        //Some(json_object)
-
-        Some(ScoreboardMessage {})
+        let json_object: StateUpdate = serde_json::from_str(message_text.as_str()).ok()?;
+        Some(json_object)
     }
 }
