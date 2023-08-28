@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "concurrently 'vite' 'nodemon src/server.js'",
-    "blah": "tsc && nodemon --exec 'ts-node-esm' ./src/server.ts",
+    "blah": "tsc && nodemon --esm ./src/server.ts",
     "build": "tsc && vite build",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview"
