@@ -6,20 +6,52 @@ namespace derby_stats::api
 {
 	typedef function<string()> handler;
 
-	enum class http_verb
+	enum class request_type
 	{
 		get,
-		post,
-		put,
-		delete_
+		websocket,
 	};
 
-	typedef struct
+	class handler_definition
 	{
-		http_verb verb;
-		string endpoint;
-		handler handler;
-	} handler_definition;
+	private:
+		string endpoint_;
+
+	public:
+		virtual ~handler_definition() = default;
+
+		[[nodiscard]] virtual request_type request_type() = 0;
+
+		[[nodiscard]] const string& endpoint() const
+		{
+			return endpoint_;
+		}
+	};
+
+	class get_handler_definition : public handler_definition
+	{
+	public:
+		[[nodiscard]] api::request_type request_type() override
+		{
+			return request_type::get;
+		}
+	};
+
+	class websocket_handler_definition : public handler_definition
+	{
+	public:
+		[[nodiscard]] api::request_type request_type() override
+		{
+			return request_type::websocket;
+		}
+	};
+
+	//typedef struct
+	//{
+	//	request_type request_type;
+	//	string endpoint;
+	//	handler handler;
+	//} handler_definition;
 
 	template<bool SSL>
 	function<void(uWS::HttpResponse<SSL>*, uWS::HttpRequest*)> map_handler(const handler handler)
@@ -44,14 +76,14 @@ namespace derby_stats::api
 
 			for (auto& handler : handlers)
 			{
-				switch (handler.verb)
+				switch (handler.request_type)
 				{
-				case http_verb::get:
+				case request_type::get:
 					app.get(handler.endpoint, map_handler<SSL>(handler.handler));
 					break;
 
-				case http_verb::post:
-					app.post(handler.endpoint, map_handler<SSL>(handler.handler));
+				case request_type::websocket:
+					app.ws(handler.endpoint, map_handler<SSL>(handler.handler));
 					break;
 
 				default:

@@ -20,7 +20,8 @@ vector<handler_definition> RostersController::get_handlers()
 {
 	return
 	{
-		{ http_verb::get, "/api/rosters", [this] { return this->get_rosters(); } },
+		{ request_type::get, "/api/rosters", [this] { return this->get_rosters(); } },
+		{ request_type::websocket, "/api/rosters/updates", [this] { return ""; }},
 	};
 }
 
@@ -28,10 +29,9 @@ json map_skaters(const map<string, roster_skater>& skaters)
 {
 	vector<json> result;
 
-	for(const auto& [id, name, number] : skaters | views::values)
+	for(const auto& [name, number] : skaters | views::values)
 	{
 		result.push_back({ 
-			{ "id", id },
 			{ "name", name },
 			{ "number", number }
 		});

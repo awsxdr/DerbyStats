@@ -14,10 +14,10 @@ GamesController::GamesController(const shared_ptr<GameStateStore>& state_store)
 
 vector<handler_definition> GamesController::get_handlers()
 {
-	return
-	{
-		{ http_verb::get, "/api/games", [this] { return this->get_game_state(); } },
-	};
+	return {};
+	//{
+	//	{ request_type::get, "/api/games", [this] { return this->get_game_state(); } },
+	//};
 }
 
 string GamesController::get_game_state() const

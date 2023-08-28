@@ -9,6 +9,7 @@
 #include <ranges>
 #include <regex>
 #include <string>
+#include <vector>
 
 namespace derby_stats::state_stores
 {
@@ -25,9 +26,20 @@ namespace derby_stats::state_stores
 	{
 	public:
 		typedef function<void(TState& state, update_data&& data)> state_mapper;
+		typedef function<void(TState state)> update_listener_callback;
+
 	private:
 		TState state;
 		map<string, state_mapper> mappers;
+		vector<update_listener_callback> update_listeners;
+
+		void notify_update_listeners()
+		{
+			for(auto& listener: this->update_listeners)
+			{
+				listener(this->state);
+			}
+		}
 
 		void handle_state_update(string key, string value)
 		{
@@ -40,7 +52,7 @@ namespace derby_stats::state_stores
 			mapper(this->state, { key, move(value) });
 		}
 
-		string escape_regex(const string& value)
+		static string escape_regex(const string& value)
 		{
 			static const auto regex_chars = "().";
 
@@ -107,6 +119,11 @@ namespace derby_stats::state_stores
 		TState get_state()
 		{
 			return this->state;
+		}
+
+		void add_update_listener(update_listener_callback callback)
+		{
+			this->update_listeners.push_back(callback);
 		}
 	};
 }

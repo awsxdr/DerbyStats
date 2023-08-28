@@ -16,7 +16,7 @@ const team_state_getter home_team_selector = [](auto&& state) -> roster_team& { 
 const team_state_getter away_team_selector = [](auto&& state) -> roster_team& { return state.away_team; };
 
 RostersStateStore::state_mapper map_skater(const team_state_getter& team_getter, const skater_state_setter& skater_setter);
-void set_skater_id(roster_skater& skater, const string& id);
+
 void set_skater_name(roster_skater& skater, const string& name);
 void set_skater_number(roster_skater& skater, const string& number);
 
