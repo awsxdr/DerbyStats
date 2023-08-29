@@ -1,7 +1,7 @@
 import WebSocket from 'ws';
 
 type StateValue = number | string;
-type State = Map<string, StateValue>;
+export type State = Map<string, StateValue>;
 interface StateUpdate {
     state: State;
 }
@@ -17,11 +17,18 @@ type UpdateHandler = (state: State) => void;
 type EventType = "Connect" | "Update";
 type EventHandler = ConnectHandler | UpdateHandler;
 
+type UpdateMatchPredicate = (updateType: string) => boolean;
+
+type UpdateHandlerDetails = {
+    predicate: UpdateMatchPredicate,
+    handler: UpdateHandler,
+};
+
 export class ScoreboardConnector {
     #socket: WebSocket;
     #isOpen: boolean;
     #connectHandlers: ConnectHandler[] = [];
-    #updateHandlers: UpdateHandler[] = [];
+    #updateHandlers: UpdateHandlerDetails[] = [];
 
     state: State;
 
@@ -37,13 +44,32 @@ export class ScoreboardConnector {
         this.state = new Map<string, StateValue>();
     }
 
-    listenForTopic(topic: string) {
-        console.log(`Registering topic '${topic}'`);
+    listenForTopics(topics: string[]) {
+        topics.forEach(topic => {
+            console.log(`Registering topic '${topic}'`);
+        });
 
         this.#socket.send(JSON.stringify({
             action: 'Register',
-            paths: [ topic ]
+            paths: topics
         }));
+    }
+
+    addUpdateHandler(predicate: UpdateMatchPredicate, handler: UpdateHandler) {
+        this.#updateHandlers.push({ predicate, handler });
+    }
+
+    isOpen() {
+        return this.#isOpen;
+    }
+
+    on(_event: "Connect", handler: ConnectHandler): void;
+    on(event: EventType, handler: EventHandler) {
+        switch(event) {
+            case "Connect":
+                this.#connectHandlers.push(handler as ConnectHandler);
+                break;
+        }
     }
 
     #handleOpen() {
@@ -59,25 +85,10 @@ export class ScoreboardConnector {
 
         this.state = combineMaps(this.state, updateState);
 
-        this.#updateHandlers.forEach(h => h(this.state));
-    }
-
-    isOpen() {
-        return this.#isOpen;
-    }
-
-    on(_event: "Connect", handler: ConnectHandler): void;
-    on(_event: "Update", handler: UpdateHandler): void;
-    on(event: EventType, handler: EventHandler) {
-        switch(event) {
-            case "Connect":
-                this.#connectHandlers.push(handler as ConnectHandler);
-                break;
-
-            case "Update":
-                this.#updateHandlers.push(handler as UpdateHandler);
-                break;
-        }
-
+        this.#updateHandlers.forEach(h => {
+            if(!Object.keys(update.state).every(k => !h.predicate(k))) {
+                h.handler(this.state);
+            }
+        });
     }
 };
