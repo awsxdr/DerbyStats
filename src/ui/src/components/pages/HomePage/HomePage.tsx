@@ -1,9 +1,10 @@
 import styles from './HomePage.module.scss';
 
-import { Label, LineChart, Line, XAxis, YAxis } from 'recharts';
+import { Label, LineChart, Line, XAxis, YAxis, Tooltip } from 'recharts';
 
 import { Button, Navbar, NavbarGroup, NavbarHeading } from '@blueprintjs/core';
 import { useDarkThemeContext } from '../../../contexts/';
+import { SyntheticEvent, useCallback, useEffect, useRef, useState } from 'react';
 
 export const HomePage = () => {
 
@@ -38,6 +39,26 @@ export const HomePage = () => {
         { jam: 26, team1Score: 62, team2Score: 88 },
     ];
 
+    const team1Color = useDarkTheme ? '#ffddaa' : '#ff4400';
+
+    const [graphWidth, setGraphWidth] = useState(800);
+
+    const graphWrapperRef =  useRef<HTMLDivElement>(null);
+
+    const scaleGraphToWindow = useCallback(() => {
+        const width = graphWrapperRef.current?.clientWidth ?? 800;
+        console.log(width);
+        setGraphWidth(width);
+    }, [setGraphWidth]);
+
+    const handleResize = useCallback((_event: UIEvent) => {
+        scaleGraphToWindow();
+    }, [scaleGraphToWindow]);
+
+    useEffect(scaleGraphToWindow, []);
+
+    window.addEventListener('resize', handleResize);
+
     return (
         <div className={`${useDarkTheme && 'bp5-dark'}`}>
             <Navbar fixedToTop>
@@ -49,16 +70,19 @@ export const HomePage = () => {
                 </NavbarGroup>
             </Navbar>
             <div className={styles.homeContent}>
-                <LineChart data={data} width={800} height={600}>
-                    <Line type="monotone" stroke='#ff4400' strokeWidth={3} dataKey="team1Score" />
-                    <Line type="monotone" stroke='#00bb22' strokeWidth={3} dataKey="team2Score" />
-                    <XAxis dataKey="jam">
-                        <Label value="Jam #" />
-                    </XAxis>
-                    <YAxis>
-                        <Label value="Cumulative score" angle={-90} />
-                    </YAxis>
-                </LineChart>
+                <div className={styles.graph} ref={graphWrapperRef}>
+                    <LineChart data={data} width={graphWidth} height={graphWidth / 2}>
+                        <Line type="monotone" dot={false} stroke={team1Color} strokeWidth={3} dataKey="team1Score" name="White" />
+                        <Line type="monotone" dot={false} stroke='#00bb22' strokeWidth={3} dataKey="team2Score" name="Black" />
+                        <XAxis dataKey="jam" name="Jam">
+                            <Label value="Jam #" position="insideBottom" offset={-1} />
+                        </XAxis>
+                        <YAxis>
+                            <Label value="Cumulative score" angle={-90} />
+                        </YAxis>
+                        <Tooltip />
+                    </LineChart>
+                </div>
             </div>
         </div>
     );

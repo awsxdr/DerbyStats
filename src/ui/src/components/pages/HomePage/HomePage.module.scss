@@ -12,3 +12,30 @@
         background-color: $gray1;
     }
 }
+
+.graph {
+
+    Line {
+        :global(.bp5-dark) & {
+            stroke: #fff;
+        }
+    }
+
+    div & {
+        :global(.recharts-default-tooltip) {
+            :global(.bp5-dark) & {
+                background-color: $gray1 !important;
+            }
+        }
+    }
+
+    :global(.recharts-text) {
+        :global(.bp5-dark) & {
+            fill: $light-gray2;
+        }
+    }
+
+    width: 80vw;
+    max-width: 800px;
+    overflow: hidden;
+}
