@@ -1,34 +1,63 @@
-use serde_json::{json, Value};
+use std::sync::{Mutex, Arc};
+use std::{thread, net::TcpStream};
 
-use websocket::{
-    ClientBuilder,
-    stream::sync::NetworkStream,
-    client::sync::Client,
-    Message,
-    OwnedMessage
-};
+use bus::{Bus, BusReader};
 
 use serde::{Serialize, Deserialize};
+use serde_json::{json, Value, Map};
+
+use websocket::OwnedMessage;
+use websocket::{
+    ClientBuilder,
+    sync::Writer,
+    Message
+};
+
+pub type ScoreboardState = Map<String, Value>;
+
+struct ScoreboardStateStore {
+    pub state: ScoreboardState,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct ScoreboardStateUpdate {
+    pub state: ScoreboardState,
+}
 
 pub struct ScoreboardConnection {
-    socket: Client<Box<dyn NetworkStream + Send>>
+    socket_writer: Writer<TcpStream>,
+    bus: Arc<Mutex<Bus<ScoreboardState>>>,
 }
 
 impl ScoreboardConnection {
     pub fn new(url: &str) -> Result<ScoreboardConnection, String> {
-        let mut builder = match ClientBuilder::new(&url) {
-            Ok(b) => b,
-            Err(e) => return Err(e.to_string())
+        
+        let (mut receiver, sender) = 
+            ClientBuilder::new(&url).unwrap()
+            .connect_insecure().unwrap()
+            .split().unwrap();
+
+        let connection = ScoreboardConnection {
+            socket_writer: sender,
+            bus: Arc::new(Mutex::new(Bus::new(100))),
         };
 
-        let socket = match builder.connect(None) {
-            Ok(s) => s,
-            Err(e) => return Err(e.to_string())
-        };
+        let thread_bus = connection.bus.clone();
+        thread::spawn(move || {
+            let mut state = ScoreboardStateStore::new();
 
-        Ok(ScoreboardConnection {
-            socket: socket
-        })
+            for message in receiver.incoming_messages() {
+                match message {
+                    Ok(m) => {
+                        state.handle_message(m);
+                        thread_bus.lock().unwrap().broadcast(state.state.clone());
+                    },
+                    _ => {}
+                };
+            }
+        });
+
+        Ok(connection)
     }
 
     pub fn register_topic(&mut self, topic_name: &str) {
@@ -39,40 +68,35 @@ impl ScoreboardConnection {
             ]
         });
 
-        self.socket.send_message(&Message::text(message_json.to_string())).unwrap();
+        self.socket_writer.send_message(&Message::text(message_json.to_string())).unwrap();
+    }
+
+    pub fn get_receiver(&mut self) -> BusReader<ScoreboardState> {
+        self.bus.lock().unwrap().add_rx()
     }
 }
 
-#[derive(Serialize, Deserialize)]
-pub struct StateUpdate {
-    pub state: Value,
-}
+impl ScoreboardStateStore {
 
-impl Iterator for ScoreboardConnection {
-    type Item = StateUpdate;
+    pub fn new() -> ScoreboardStateStore {
+        ScoreboardStateStore {
+            state: Map::new()
+        }
+    }
 
-    fn next(&mut self) -> Option<Self::Item> {
-        let message_result = self.socket.recv_message();
-
-        let message = match message_result {
-            Ok(m) => m,
-            Err(e) => {
-                println!("Error in message loop {:?}", e);
-                return None;
-            }
-        };
-        
+    pub fn handle_message(&mut self, message: OwnedMessage) {
         let message_text = match message {
             OwnedMessage::Text(data) => data,
             _ => {
                 println!("Unexpected message type received: {:?}", message);
-                return None;
+                return;
             }
         };
 
-        println!("{}", message_text);
+        let update: ScoreboardStateUpdate = serde_json::from_str(message_text.as_str()).unwrap();
 
-        let json_object: StateUpdate = serde_json::from_str(message_text.as_str()).ok()?;
-        Some(json_object)
+        for (key, value) in update.state {
+            self.state[&key] = value;
+        }
     }
 }

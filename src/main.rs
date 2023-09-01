@@ -1,9 +1,9 @@
 mod scoreboard_connector;
-mod scoreboard_data;
+mod socket_server;
+mod cumulative_score;
 
 use scoreboard_connector::ScoreboardConnection;
-
-use crate::scoreboard_data::ScoreboardData;
+use socket_server::SocketServer;
 
 fn main() {
     let mut scoreboard_connection = ScoreboardConnection::new("ws://192.168.86.33:8000/WS").unwrap();
@@ -12,11 +12,7 @@ fn main() {
         scoreboard_connection.register_topic(topic.as_str());
     }
 
-    let mut scoreboard_data = ScoreboardData::new();
-
-    for message in scoreboard_connection {
-        scoreboard_data = scoreboard_data.apply_update(message);
-    }
+    SocketServer::new();
 }
 
 fn get_required_topics() -> Vec<String> {
