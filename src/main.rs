@@ -12,11 +12,6 @@ async fn main() {
     println!("Connecting to scoreboard");
     let mut scoreboard_connection = ScoreboardConnection::new("ws://192.168.86.33:8000/WS/").unwrap();
 
-    println!("Registering topics");
-    for topic in get_required_topics() {
-        scoreboard_connection.register_topic(topic.as_str());
-    }
-
     println!("Starting API endpoints");
     let server = SocketServer::new();
     CumulativeScore::new(scoreboard_connection, server);
@@ -28,7 +23,7 @@ async fn main() {
 
     let address = "0.0.0.0:8001".parse().unwrap();
     let http_server = Server::bind(&address).serve(make_service);
-
+    
     println!("Listening at http://{}/", address);
     let _ = http_server.await;
 }
@@ -50,14 +45,4 @@ async fn send_file(request: Request<Body>) -> Result<Response<Body>> {
         .unwrap())
         .or_else(|_| Response::builder().status(StatusCode::NOT_FOUND).body(Body::empty()))
         .unwrap())
-}
-
-fn get_required_topics() -> Vec<String> {
-    vec![
-        "ScoreBoard.Version(release)",
-        "ScoreBoard.CurrentGame.Clock(Period)",
-        "ScoreBoard.CurrentGame.CurrentPeriodNumber",
-        "ScoreBoard.CurrentGame.Period(*).Jam(*).TeamJam(*).TotalScore",
-        "ScoreBoard.CurrentGame.Team(*).Skater(*).Penalty(*)",
-    ].into_iter().map(String::from).collect()
 }

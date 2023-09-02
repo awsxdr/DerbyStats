@@ -69,6 +69,8 @@ impl ScoreboardConnection {
             ]
         });
 
+        println!("Registering topic {}", topic_name);
+
         self.socket_writer.send_message(&Message::text(message_json.to_string())).unwrap();
     }
 
@@ -97,6 +99,8 @@ impl ScoreboardStateStore {
         let update: ScoreboardStateUpdate = serde_json::from_str(message_text.as_str()).unwrap();
 
         for (key, value) in update.state {
+            println!("State update received for {}", key);
+            
             self.state.insert(key, value);
         }
     }

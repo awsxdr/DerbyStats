@@ -6,12 +6,12 @@ use serde_json::{Value, json};
 use websocket::{sync::{Server, Writer}, OwnedMessage, Message};
 
 pub struct SocketServer {
-    subscribers: HashMap<String, Vec<Arc<Mutex<Writer<TcpStream>>>>>,
+    subscribers: HashMap<(String, String), Vec<Arc<Mutex<Writer<TcpStream>>>>>,
     update_providers: HashMap<String, Arc<Mutex<dyn UpdateProvider + Send>>>,
 }
 
 pub trait UpdateProvider {
-    fn get_state(&self) -> Value;
+    fn get_state(&self, game_id: &String) -> Value;
 }
 
 #[derive(Serialize, Deserialize)]
@@ -26,6 +26,8 @@ struct SubscribeMessage {
     pub message_type: String,
     #[serde(rename = "dataType")]
     pub data_type: String,
+    #[serde(rename = "gameId")]
+    pub game_id: String,
 }
 
 impl SocketServer {
@@ -66,8 +68,10 @@ impl SocketServer {
         socket_server
     }
 
-    pub fn send_update(&mut self, data_type: &String, update: Value) {
-        self.subscribers.get(data_type).map(|handlers| {
+    pub fn send_update(&mut self, game_id: &String, data_type: &String, update: Value) {
+        let key = (game_id.clone(), data_type.clone());
+
+        self.subscribers.get(&key).map(|handlers| {
             for handler in handlers {
                 handler.lock().unwrap().send_message(&Message::text(json!({
                     "dataType": data_type,
@@ -105,17 +109,21 @@ impl SocketServer {
     }
 
     fn handle_subscribe(&mut self, subscribe_message: SubscribeMessage, writer: Arc<Mutex<Writer<TcpStream>>>) {
-        if !self.subscribers.contains_key(&subscribe_message.data_type) {
-            self.subscribers.insert(subscribe_message.data_type.clone(), Vec::new());
+
+        println!("Subscription request received for {} on game {}", subscribe_message.data_type, subscribe_message.game_id);
+
+        let subscriber_key = (subscribe_message.game_id.clone(), subscribe_message.data_type.clone());
+        if !self.subscribers.contains_key(&subscriber_key) {
+            self.subscribers.insert(subscriber_key.clone(), Vec::new());
         }
 
-        self.subscribers.get_mut(&subscribe_message.data_type).unwrap().push(writer.clone());
+        self.subscribers.get_mut(&subscriber_key).unwrap().push(writer.clone());
 
         if !self.update_providers.contains_key(&subscribe_message.data_type) {
             return;
         }
 
-        let state = self.update_providers[&subscribe_message.data_type].lock().unwrap().get_state();
+        let state = self.update_providers[&subscribe_message.data_type].lock().unwrap().get_state(&subscribe_message.game_id);
 
         writer.lock().unwrap().send_message(&Message::text(json!({
             "dataType": subscribe_message.data_type,
