@@ -32,6 +32,7 @@ pub struct ScoreboardConnection {
 impl ScoreboardConnection {
     pub fn new(url: &str) -> Result<ScoreboardConnection, String> {
         
+        println!("Opening websocket connection to {}", url);
         let (mut receiver, sender) = 
             ClientBuilder::new(&url).unwrap()
             .connect_insecure().unwrap()
@@ -96,7 +97,7 @@ impl ScoreboardStateStore {
         let update: ScoreboardStateUpdate = serde_json::from_str(message_text.as_str()).unwrap();
 
         for (key, value) in update.state {
-            self.state[&key] = value;
+            self.state.insert(key, value);
         }
     }
 }

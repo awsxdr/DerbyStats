@@ -29,17 +29,20 @@ struct SubscribeMessage {
 }
 
 impl SocketServer {
-    pub fn new() {
-        thread::spawn(move || {
-            let socket_server = Arc::new(SocketServer {
-                subscribers: HashMap::new(),
-                update_providers: HashMap::new(),
-            });
+    pub fn new() -> Arc<Mutex<SocketServer>> {
+        let socket_server = Arc::new(Mutex::new(SocketServer {
+            subscribers: HashMap::new(),
+            update_providers: HashMap::new(),
+        }));
 
-            let server = Server::bind("/ws").unwrap();
+        let socket_server_thread_instance = socket_server.clone();
+
+        thread::spawn(move || {
+
+            let server = Server::bind("0.0.0.0:8003").unwrap();
 
             for request in server.filter_map(Result::ok) {
-                let socket_server_loop_instance = socket_server.clone();
+                let socket_server_loop_instance = socket_server_thread_instance.clone();
                 thread::spawn(move || {
                     let client = request.accept().unwrap();
                     let (mut reader, writer) = client.split().unwrap();
@@ -49,7 +52,7 @@ impl SocketServer {
                     for message in reader.incoming_messages() {
                         match message {
                             Ok(m) => {
-                                socket_server_loop_instance.handle_message(m, writer_arc.clone());
+                                socket_server_loop_instance.lock().unwrap().handle_message(m, writer_arc.clone());
                             }
                             _ => {
                                 return;
@@ -57,6 +60,19 @@ impl SocketServer {
                         }
                     }
                 });
+            }
+        });
+
+        socket_server
+    }
+
+    pub fn send_update(&mut self, data_type: &String, update: Value) {
+        self.subscribers.get(data_type).map(|handlers| {
+            for handler in handlers {
+                handler.lock().unwrap().send_message(&Message::text(json!({
+                    "dataType": data_type,
+                    "body": update
+                }).to_string())).unwrap();
             }
         });
     }

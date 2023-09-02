@@ -1,0 +1,27 @@
+@import "@blueprintjs/core/lib/scss/variables";
+
+.graph {
+    Line {
+        :global(.bp5-dark) & {
+            stroke: $white;
+        }
+    }
+
+    div & {
+        :global(.recharts-default-tooltip) {
+            :global(.bp5-dark) & {
+                background-color: $gray1 !important;
+            }
+        }
+    }
+
+    :global(.recharts-text) {
+        :global(.bp5-dark) & {
+            fill: $light-gray2;
+        }
+    }
+
+    width: 80vw;
+    max-width: 800px;
+    overflow: hidden;
+}

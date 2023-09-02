@@ -6,26 +6,29 @@ use serde_json::{json, Value};
 
 use crate::{socket_server::{SocketServer, UpdateProvider}, scoreboard_connector::{ScoreboardConnection, ScoreboardState}};
 
-struct CumulativeScore {
+pub struct CumulativeScore {
     state: Value,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 struct JamScore {
+    #[serde(rename = "jamNumber")]
     jam_number: i32,
+    #[serde(rename = "team1Score")]
     team_1_score: i64,
+    #[serde(rename = "team2Score")]
     team_2_score: i64,
 }
 
 impl CumulativeScore {
-    pub fn new(mut scoreboard: ScoreboardConnection, mut socket_server: SocketServer) {
+    pub fn new(mut scoreboard: ScoreboardConnection, socket_server: Arc<Mutex<SocketServer>>) {
         let cumulative_score = Arc::new(Mutex::new(CumulativeScore { 
             state: json!({
                 "jamScores": []
             }),
         }));
 
-        socket_server.set_update_provider(&"CumulativeScore".to_string(), cumulative_score.clone());
+        socket_server.lock().unwrap().set_update_provider(&"CumulativeScore".to_string(), cumulative_score.clone());
 
         scoreboard.register_topic("ScoreBoard.CurrentGame.Period(*).Jam(*).TeamJam(*).TotalScore");
 
@@ -33,25 +36,29 @@ impl CumulativeScore {
         thread::spawn(move || {
             for state_update in receiver.iter() {
                 cumulative_score.lock().unwrap().process_state_update(state_update);
+                socket_server.lock().unwrap().send_update(
+                    &"CumulativeScore".to_string(), 
+                    cumulative_score.lock().unwrap().state.clone());
             }
         });
     }
 
     fn process_state_update(&mut self, update: ScoreboardState) {
-        let total_score_regex = Regex::new("").unwrap();
+        let total_score_regex = Regex::new(r#"ScoreBoard\.CurrentGame\.Period\((\d+)\)\.Jam\((\d+)\)\.TeamJam\((\d+)\)\.TotalScore"#).unwrap();
         
-        let scores = update.iter()
+        let mut scores: Vec<JamScore> = update.iter()
             .filter_map(|(k, v)| {
                 total_score_regex.captures(k).map(
-                    |c| (
-                        c.iter(),
-                        v
-                    ))
+                    |c| {
+                        let (_, [period, jam, team]) = c.extract();
+                        
+                        (period, jam, team, v)
+                })
             })
-            .map(|(mut matches, value)| {(
-                matches.nth(0).unwrap().unwrap().as_str().parse::<i32>().unwrap(),
-                matches.nth(1).unwrap().unwrap().as_str().parse::<i32>().unwrap(),
-                matches.nth(2).unwrap().unwrap().as_str().parse::<i32>().unwrap(),
+            .map(|(period, jam, team, value)| {(
+                period.parse::<i32>().unwrap(),
+                jam.parse::<i32>().unwrap(),
+                team.parse::<i32>().unwrap(),
                 value.as_i64().unwrap()
             )})
             .fold(HashMap::new(), |mut current, item| {
@@ -70,11 +77,15 @@ impl CumulativeScore {
                 }
 
                 current
-            });
+            })
+            .values()
+            .cloned()
+            .collect();
+
+        scores.sort_by(|a, b| a.jam_number.partial_cmp(&b.jam_number).unwrap());
 
         self.state = json!({
-            "jamScores":
-                scores
+            "jamScores": scores                
         });
     }
 }
