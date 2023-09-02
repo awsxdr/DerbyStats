@@ -1,0 +1,14 @@
+@import "@blueprintjs/core/lib/scss/variables";
+
+.homeContent {
+    padding: 10px;
+    padding-top: $pt-navbar-height + 10px;
+    min-height: 100vh;
+    display: flex;
+    height: 100%;
+    background-color: $white;
+
+    :global(.bp5-dark) & {
+        background-color: $gray1;
+    }
+}

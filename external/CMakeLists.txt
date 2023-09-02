@@ -1,8 +1,0 @@
-add_subdirectory(zlib)
-add_subdirectory(libuv)
-add_subdirectory(uSockets)
-add_subdirectory(uWebSockets)
-add_subdirectory(asio)
-add_subdirectory(websocketpp)
-add_subdirectory(cxxopts)
-add_subdirectory(json)
