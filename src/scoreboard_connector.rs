@@ -31,7 +31,7 @@ pub struct ScoreboardConnection {
 }
 
 impl ScoreboardConnection {
-    pub fn new(url: &str) -> Result<ScoreboardConnection, String> {
+    pub fn new(url: String) -> Result<ScoreboardConnection, String> {
         
         info!("Opening scoreboard websocket connection to {}", url);
         let (mut receiver, sender) = 

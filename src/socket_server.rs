@@ -76,7 +76,7 @@ impl SocketServer {
         self.update_providers.write().await.insert(data_type.clone(), update_provider);
     }
 
-    pub async fn listen(mut self) {
+    pub async fn listen(mut self, port: u16) {
         let connections = Connections::default();
         let subscriptions = Subscriptions::default();
 
@@ -120,7 +120,7 @@ impl SocketServer {
 
         let routes = websocket_path.or(default_path).or(ui_files);
 
-        warp::serve(routes).run(([0, 0, 0, 0], 8001)).await;
+        warp::serve(routes).run(([0, 0, 0, 0], port)).await;
     }
 
     async fn socket_connected(websocket: WebSocket, connections: Connections, subscriptions: Subscriptions, update_providers: UpdateProviders) {
