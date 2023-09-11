@@ -1,10 +1,13 @@
-use std::{thread, collections::HashMap, sync::{Mutex, Arc}};
+use std::{collections::HashMap, sync::Arc};
 
+use tokio::sync::Mutex;
+
+use log::{debug, error};
 use regex::Regex;
 use serde::{Serialize, Deserialize};
 use serde_json::{json, Value};
 
-use crate::{socket_server::{SocketServer, UpdateProvider}, scoreboard_connector::{ScoreboardConnection, ScoreboardState}};
+use crate::{socket_server::{UpdateProvider, Update, SocketServer}, scoreboard_connector::{ScoreboardConnection, ScoreboardState}};
 
 pub struct CumulativeScore {
     game_states: HashMap<String, Value>,
@@ -23,23 +26,32 @@ struct JamScore {
 }
 
 impl CumulativeScore {
-    pub fn new(mut scoreboard: ScoreboardConnection, socket_server: Arc<Mutex<SocketServer>>) {
+    pub async fn new(scoreboard: &mut ScoreboardConnection, socket_server: &mut SocketServer) {
         let cumulative_score = Arc::new(Mutex::new(CumulativeScore { 
             game_states: HashMap::new(),
         }));
 
-        socket_server.lock().unwrap().set_update_provider(&"CumulativeScore".to_string(), cumulative_score.clone());
-
         let mut receiver = scoreboard.get_receiver();
-        thread::spawn(move || {
-            for state_update in receiver.iter() {
-                let update_game_ids = cumulative_score.lock().unwrap().process_state_update(state_update);
 
+        let update_sender = socket_server.get_update_sender();
+        socket_server.register_update_provider(&"CumulativeScore".to_string(), cumulative_score.clone()).await;
+
+        tokio::task::spawn(async move {
+            for state_update in receiver.iter() {
+                let update_game_ids = cumulative_score.lock().await.process_state_update(state_update);
+
+                debug!("{} games updated", update_game_ids.len());
                 for update_game_id in update_game_ids {
-                    socket_server.lock().unwrap().send_update(
-                        &update_game_id,
-                        &"CumulativeScore".to_string(), 
-                        cumulative_score.lock().unwrap().get_state(&update_game_id));
+                    let update = if let Some(s) = cumulative_score.lock().await.game_states.get(&update_game_id) {
+                        s.clone()
+                    } else {
+                        continue;
+                    };
+
+                    debug!("Sending CumulativeScore update for game {}", update_game_id.clone());
+                    if let Err(e) = update_sender.send(Update { game_id: update_game_id, data_type: "CumulativeScore".to_string(), update: update.clone()}) {
+                        error!("Error sending update on mpsc: {:?}", e);
+                    }
                 }
             }
         });
@@ -50,7 +62,7 @@ impl CumulativeScore {
     fn process_state_update(&mut self, update: ScoreboardState) -> Vec<String> {
         let total_score_regex = Regex::new(r#"ScoreBoard\.Game\(([^\)]+)\)\.Period\((\d+)\)\.Jam\((\d+)\)\.TeamJam\((\d+)\)\.TotalScore"#).unwrap();
 
-        println!("Processing stats update for cumulative score");
+        debug!("Processing stats update for cumulative score");
         
         let scores = update.iter()
             .filter_map(|(k, v)| {
@@ -110,7 +122,7 @@ impl CumulativeScore {
                 "jamScores": scores_vector                
             }));
 
-            println!("Set cumulative score state for game {}", game_id);
+            debug!("Set cumulative score state for game {}", game_id);
         }
 
         scores.keys().map(|k| k.clone()).collect()

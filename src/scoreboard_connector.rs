@@ -3,6 +3,7 @@ use std::{thread, net::TcpStream};
 
 use bus::{Bus, BusReader};
 
+use log::{debug, info, warn};
 use serde::{Serialize, Deserialize};
 use serde_json::{json, Value, Map};
 
@@ -32,7 +33,7 @@ pub struct ScoreboardConnection {
 impl ScoreboardConnection {
     pub fn new(url: &str) -> Result<ScoreboardConnection, String> {
         
-        println!("Opening websocket connection to {}", url);
+        info!("Opening scoreboard websocket connection to {}", url);
         let (mut receiver, sender) = 
             ClientBuilder::new(&url).unwrap()
             .connect_insecure().unwrap()
@@ -69,7 +70,7 @@ impl ScoreboardConnection {
             ]
         });
 
-        println!("Registering topic {}", topic_name);
+        debug!("Registering topic {}", topic_name);
 
         self.socket_writer.send_message(&Message::text(message_json.to_string())).unwrap();
     }
@@ -91,7 +92,7 @@ impl ScoreboardStateStore {
         let message_text = match message {
             OwnedMessage::Text(data) => data,
             _ => {
-                println!("Unexpected message type received: {:?}", message);
+                warn!("Unexpected message type received: {:?}", message);
                 return;
             }
         };
@@ -99,7 +100,7 @@ impl ScoreboardStateStore {
         let update: ScoreboardStateUpdate = serde_json::from_str(message_text.as_str()).unwrap();
 
         for (key, value) in update.state {
-            println!("State update received for {}", key);
+            debug!("State update received for {}", key);
             
             self.state.insert(key, value);
         }

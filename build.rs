@@ -15,12 +15,10 @@ fn main() {
             .current_dir("./src/ui")
             .output()
             .unwrap();
-    }
 
-    let build_type = env::var_os("PROFILE").unwrap();
-    let ui_out_path = Path::new("target").join(build_type).join("ui");
+        let build_type = env::var_os("PROFILE").unwrap();
+        let ui_out_path = Path::new("target").join(build_type).join("ui");
 
-    if env::var_os("BUILD_UI").is_some() {
         println!("Copying UI to {}", ui_out_path.as_os_str().to_str().unwrap());
 
         if cfg!(target_os = "Windows") {
@@ -36,6 +34,8 @@ fn main() {
         }
     }
 
-    println!("cargo:rerun-if-changed=build.rs");
-    println!("cargo:rerun-if-changed=src/ui/**/*.ts*");
-} 
+    // cargo_emit::rerun_if_changed!(
+    //     "build.rs",
+    //     "src/ui/"
+    // );
+}

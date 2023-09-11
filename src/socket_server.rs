@@ -1,14 +1,25 @@
-use std::{thread, net::TcpStream, collections::HashMap, sync::{Mutex, Arc}};
+use std::{sync::{Arc, atomic::{AtomicUsize, Ordering}}, collections::HashMap};
 
+use futures_util::{SinkExt, StreamExt};
+use log::{info, error, trace, debug};
 use serde::{Serialize, Deserialize};
-
 use serde_json::{Value, json};
-use websocket::{sync::{Server, Writer}, OwnedMessage, Message};
+use tokio::sync::{mpsc, RwLock, Mutex};
+use tokio_stream::wrappers::UnboundedReceiverStream;
+use warp::Filter;
+use warp::ws::{WebSocket, Message};
 
-pub struct SocketServer {
-    subscribers: HashMap<(String, String), Vec<Arc<Mutex<Writer<TcpStream>>>>>,
-    update_providers: HashMap<String, Arc<Mutex<dyn UpdateProvider + Send>>>,
-}
+type Connections = Arc<RwLock<HashMap<usize, mpsc::UnboundedSender<Update>>>>;
+type Subscribers = RwLock<Vec<usize>>;
+type SubscribeChannel = (SubscribeSender, SubscribeReceiver);
+type SubscribeSender = mpsc::UnboundedSender<(usize, SubscribeMessage)>;
+type SubscribeReceiver = mpsc::UnboundedReceiver<(usize, SubscribeMessage)>;
+type SubscriptionKey = (String, String);
+type Subscriptions = Arc<RwLock<HashMap<SubscriptionKey, Subscribers>>>;
+type UpdateChannel = (UpdateSender, UpdateReceiver);
+pub type UpdateSender = mpsc::UnboundedSender<Update>;
+type UpdateReceiver = mpsc::UnboundedReceiver<Update>;
+type UpdateProviders = Arc<RwLock<HashMap<String, Arc<Mutex<dyn UpdateProvider + Send>>>>>;
 
 pub trait UpdateProvider {
     fn get_state(&self, game_id: &String) -> Value;
@@ -30,104 +41,200 @@ struct SubscribeMessage {
     pub game_id: String,
 }
 
+#[derive(Clone)]
+pub struct Update {
+    pub game_id: String,
+    pub data_type: String,
+    pub update: Value
+}
+
+static NEXT_CONNECTION_ID: AtomicUsize = AtomicUsize::new(0);
+
+pub struct SocketServer {
+    update_sender: UpdateSender,
+    update_receiver: UpdateReceiver,
+    update_providers: UpdateProviders,
+}
+
 impl SocketServer {
-    pub fn new() -> Arc<Mutex<SocketServer>> {
-        let socket_server = Arc::new(Mutex::new(SocketServer {
-            subscribers: HashMap::new(),
-            update_providers: HashMap::new(),
-        }));
 
-        let socket_server_thread_instance = socket_server.clone();
+    pub fn new() -> SocketServer {
+        let (update_sender, update_receiver) = mpsc::unbounded_channel();
 
-        thread::spawn(move || {
+        SocketServer { 
+            update_sender,
+            update_receiver,
+            update_providers: Arc::new(RwLock::new(HashMap::new())),
+        }
+    }
 
-            let server = Server::bind("0.0.0.0:8003").unwrap();
+    pub fn get_update_sender(&self) -> UpdateSender {
+        self.update_sender.clone()
+    }
 
-            for request in server.filter_map(Result::ok) {
-                let socket_server_loop_instance = socket_server_thread_instance.clone();
-                thread::spawn(move || {
-                    let client = request.accept().unwrap();
-                    let (mut reader, writer) = client.split().unwrap();
+    pub async fn register_update_provider(&mut self, data_type: &String, update_provider: Arc<Mutex<dyn UpdateProvider + Send>>) {
+        self.update_providers.write().await.insert(data_type.clone(), update_provider);
+    }
 
-                    let writer_arc = Arc::new(Mutex::new(writer));
+    pub async fn listen(mut self) {
+        let connections = Connections::default();
+        let subscriptions = Subscriptions::default();
 
-                    for message in reader.incoming_messages() {
-                        match message {
-                            Ok(m) => {
-                                socket_server_loop_instance.lock().unwrap().handle_message(m, writer_arc.clone());
-                            }
-                            _ => {
-                                return;
+        let thread_connections = connections.clone();
+        let thread_subscriptions = subscriptions.clone();
+
+        tokio::task::spawn(async move {
+            while let Some(update) = self.update_receiver.recv().await {
+                let key = (update.game_id.clone(), update.data_type.clone());
+
+                if let Some(subscription) = thread_subscriptions.read().await.get(&key) {
+                    for subscriber in subscription.read().await.clone().into_iter() {
+                        if let Some(subscriber) = thread_connections.read().await.get(&subscriber) {
+                            if let Err(e) = subscriber.send(update.clone()) {
+                                error!("Error sending update across mpsc: {:?}", e);
                             }
                         }
                     }
-                });
+                }
             }
         });
 
-        socket_server
+        let connections = warp::any().map(move || connections.clone());
+        let subscriptions = warp::any().map(move || subscriptions.clone());
+        let update_providers = warp::any().map(move || self.update_providers.clone());
+
+        let websocket_path = warp::path("ws")
+            .and(warp::ws())
+            .and(connections)
+            .and(subscriptions)
+            .and(update_providers)
+            .map(|ws: warp::ws::Ws, connections, subscriptions, update_providers| {
+                ws.on_upgrade(move |websocket| Self::socket_connected(websocket, connections, subscriptions, update_providers))
+            });
+
+        let ui_path = std::env::current_exe().unwrap().parent().unwrap().join("ui");
+
+        debug!("Serving UI from {}", ui_path.to_str().unwrap());
+        let default_path = warp::path::end().and(warp::fs::dir(ui_path.clone()));
+        let ui_files = warp::fs::dir(ui_path.clone());
+
+        let routes = websocket_path.or(default_path).or(ui_files);
+
+        warp::serve(routes).run(([0, 0, 0, 0], 8001)).await;
     }
 
-    pub fn send_update(&mut self, game_id: &String, data_type: &String, update: Value) {
-        let key = (game_id.clone(), data_type.clone());
+    async fn socket_connected(websocket: WebSocket, connections: Connections, subscriptions: Subscriptions, update_providers: UpdateProviders) {
+        let connection_id = NEXT_CONNECTION_ID.fetch_add(1, Ordering::Relaxed);
 
-        self.subscribers.get(&key).map(|handlers| {
-            for handler in handlers {
-                handler.lock().unwrap().send_message(&Message::text(json!({
-                    "dataType": data_type,
-                    "body": update
-                }).to_string())).unwrap();
+        info!("New client connected and assigned ID: {}", connection_id);
+
+        let (mut client_sender, mut client_receiver) = websocket.split();
+
+        let (subscribe_sender, subscribe_receiver): SubscribeChannel = mpsc::unbounded_channel();
+        let mut subscribe_receiver = UnboundedReceiverStream::new(subscribe_receiver);
+
+        let thread_connections = connections.clone();
+
+        tokio::task::spawn(async move {
+            while let Some((connection_id, subscribe_request)) = subscribe_receiver.next().await {
+                let mut subscriptions = subscriptions.write().await;
+                let subscription_key: SubscriptionKey = (subscribe_request.game_id.clone(), subscribe_request.data_type.clone());
+
+                if !subscriptions.contains_key(&subscription_key) {
+                    subscriptions.insert(subscription_key.clone(), Subscribers::default());
+                }
+
+                let mut subscribers = subscriptions.get(&subscription_key).unwrap().write().await;
+
+                if !subscribers.contains(&connection_id) {
+                    subscribers.push(connection_id.clone())
+                }
+
+                if let Some(provider) = update_providers.read().await.get(&subscribe_request.data_type) {
+                    if let Some(connection) = thread_connections.read().await.get(&connection_id) {
+                        let state = provider.lock().await.get_state(&subscribe_request.game_id);
+                        if let Err(e) = connection.send(Update {
+                            game_id: subscribe_request.game_id.clone(),
+                            data_type: subscribe_request.data_type.clone(),
+                            update: state,
+                        }) {
+                            error!("Error sending initial state to connection {}: {:?}", connection_id, e);
+                        };
+                    }
+                }
             }
         });
-    }
 
-    pub fn set_update_provider(&mut self, data_type: &String, provider: Arc<Mutex<dyn UpdateProvider + Send>>) {
-        self.update_providers.insert(data_type.clone(), provider);
-    }
+        let (update_sender, update_receiver): UpdateChannel = mpsc::unbounded_channel();
+        let mut update_receiver = UnboundedReceiverStream::new(update_receiver);
 
-    fn handle_message(&mut self, message: OwnedMessage, writer: Arc<Mutex<Writer<TcpStream>>>) {
-        let message_text = match message {
-            OwnedMessage::Text(data) => data,
-            _ => {
-                println!("Unexpected message type received: {:?}", message);
-                return;
+        tokio::task::spawn(async move {
+            while let Some(update) = update_receiver.next().await {
+                debug!("Update received for {}", update.data_type.clone());
+
+                if let Err(e) = client_sender.send(Message::text(Self::get_update_json(&update).to_string())).await {
+                    error!("Error sending update to client {}: {:?}", connection_id, e);
+                }
             }
+        });
+
+        connections.write().await.insert(connection_id, update_sender);
+
+        while let Some(result) = client_receiver.next().await {
+            let message = match result {
+                Ok(message) => message,
+                Err(e) => {
+                    error!("Error receiving data from websocket id {}: {:?}", connection_id, e);
+                    break;
+                }
+            };
+
+            Self::handle_socket_message(connection_id, message, &subscribe_sender).await;
+        }
+
+        info!("Connection {} disconnected", connection_id);
+    }
+
+    fn get_update_json(update: &Update) -> Value {
+        json!({
+            "dataType": update.data_type,
+            "body": update.update,
+        })
+    }
+
+    async fn handle_socket_message(connection_id: usize, message: Message, subscribe_sender: &mpsc::UnboundedSender<(usize, SubscribeMessage)>) {
+        let message_text = if let Ok(s) = message.to_str() {
+            s
+        } else {
+            return;
         };
 
-        let generic_message: GenericMessage = serde_json::from_str(message_text.as_str()).unwrap();
+        trace!("Received message: {}", message_text);
+
+        let generic_message: GenericMessage = 
+            if let Ok(m) = serde_json::from_str(message_text) {
+                m
+            } else { 
+                return; 
+            };
 
         match generic_message.message_type.as_str() {
             "Subscribe" => {
-                let subscribe_message: SubscribeMessage = match serde_json::from_str(message_text.as_str()) {
+                let subscribe_message: SubscribeMessage = match serde_json::from_str(message_text) {
                     Ok(v) => { v }
-                    _ => { return; }
+                    Err(e) => { 
+                        error!("Failed to parse Subscribe message: {:?}", e);
+                        return; 
+                    }
                 };
-                self.handle_subscribe(subscribe_message, writer)
+                if let Err(e) = subscribe_sender.send((connection_id, subscribe_message)) {
+                    error!("Error sending subscribe request on mpsc: {:?}", e);
+                }
+            },
+            _ => {
+                return;
             }
-            _ => { }
         }
     }
 
-    fn handle_subscribe(&mut self, subscribe_message: SubscribeMessage, writer: Arc<Mutex<Writer<TcpStream>>>) {
-
-        println!("Subscription request received for {} on game {}", subscribe_message.data_type, subscribe_message.game_id);
-
-        let subscriber_key = (subscribe_message.game_id.clone(), subscribe_message.data_type.clone());
-        if !self.subscribers.contains_key(&subscriber_key) {
-            self.subscribers.insert(subscriber_key.clone(), Vec::new());
-        }
-
-        self.subscribers.get_mut(&subscriber_key).unwrap().push(writer.clone());
-
-        if !self.update_providers.contains_key(&subscribe_message.data_type) {
-            return;
-        }
-
-        let state = self.update_providers[&subscribe_message.data_type].lock().unwrap().get_state(&subscribe_message.game_id);
-
-        writer.lock().unwrap().send_message(&Message::text(json!({
-            "dataType": subscribe_message.data_type,
-            "body": state
-        }).to_string())).unwrap();
-    }
 }
