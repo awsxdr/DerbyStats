@@ -1,5 +1,9 @@
 @import "@blueprintjs/core/lib/scss/variables";
 
+.bodyContainer {
+    display: flex;
+}
+
 .homeContent {
     padding: 10px;
     padding-top: $pt-navbar-height + 10px;
@@ -10,5 +14,23 @@
 
     :global(.bp5-dark) & {
         background-color: $gray1;
+    }
+}
+
+.tabContainer {
+    overflow: scroll;
+}
+
+.drawerTabs {
+    flex-grow: 1;
+
+    > div {
+        flex-grow: 1;
+    }
+
+    h5 {
+        margin-bottom: 5px;
+        font-size: 12pt;
+        padding: 0 10px;
     }
 }

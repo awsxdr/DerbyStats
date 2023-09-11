@@ -26,7 +26,7 @@ export const GraphContainer = ({ children, aspectRatio }: IGraphContainerProps) 
 
     window.addEventListener('resize', handleResize);
 
-    const childProps = { ...children.props, width: graphWidth, height: graphWidth * aspectRatio };
+    const childProps = { ...children.props, width: graphWidth, height: 800 * aspectRatio };
     return (
         <div className={styles.graph} ref={graphWrapperRef}>
             {

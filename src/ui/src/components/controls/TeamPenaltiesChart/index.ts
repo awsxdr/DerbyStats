@@ -1,0 +1,1 @@
+export { TeamPenaltiesChart } from './TeamPenaltiesChart';

@@ -1,0 +1,25 @@
+@import "@blueprintjs/core/lib/scss/variables";
+
+.penaltyLine {
+    height: 2em;
+    width: 100%;
+
+    span {
+        display: inline-block;
+        height: 100%;
+        vertical-align: middle;
+    }
+}
+
+.title {
+    width: 20%,
+}
+
+.percentageContainer {
+    width: 80%;
+    border: 1px solid black;
+
+    :global(.bp5-dark) & {
+        border-color: $gray2;
+    }
+}

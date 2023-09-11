@@ -29,7 +29,7 @@ export const CumulativeScoreGraph = () => {
     useStateSocket<CumulativeScoreUpdate>("CumulativeScore", update => {
         console.log(update);
         setData(update.body.jamScores.sort((a, b) => a.periodNumber < b.periodNumber || (a.periodNumber === b.periodNumber && a.jamNumber < b.jamNumber) ? -1 : 1));
-    });
+    }, [setData]);
 
     const team1Color = useDarkTheme ? '#ffddaa' : '#ff4400';
 
