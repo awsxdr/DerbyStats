@@ -30,14 +30,14 @@ impl CumulativeScore {
         let cumulative_score = Arc::new(Mutex::new(CumulativeScore { 
             game_states: HashMap::new(),
         }));
-
+        
         let mut receiver = scoreboard.get_receiver();
 
         let update_sender = socket_server.get_update_sender();
         socket_server.register_update_provider(&"CumulativeScore".to_string(), cumulative_score.clone()).await;
 
         tokio::task::spawn(async move {
-            for state_update in receiver.iter() {
+            while let Ok(state_update) = receiver.recv().await {
                 let update_game_ids = cumulative_score.lock().await.process_state_update(state_update);
 
                 debug!("{} games updated", update_game_ids.len());

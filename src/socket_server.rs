@@ -69,6 +69,7 @@ impl SocketServer {
     }
 
     pub fn get_update_sender(&self) -> UpdateSender {
+        debug!("Creating new update sender");
         self.update_sender.clone()
     }
 
@@ -84,12 +85,16 @@ impl SocketServer {
         let thread_subscriptions = subscriptions.clone();
 
         tokio::task::spawn(async move {
+            debug!("Starting update receiver thread");
             while let Some(update) = self.update_receiver.recv().await {
                 let key = (update.game_id.clone(), update.data_type.clone());
+
+                trace!("Update receiver forwarding update of type {}", update.data_type.clone());
 
                 if let Some(subscription) = thread_subscriptions.read().await.get(&key) {
                     for subscriber in subscription.read().await.clone().into_iter() {
                         if let Some(subscriber) = thread_connections.read().await.get(&subscriber) {
+                            trace!("Sending update from update receiver thread");
                             if let Err(e) = subscriber.send(update.clone()) {
                                 error!("Error sending update across mpsc: {:?}", e);
                             }
@@ -137,6 +142,8 @@ impl SocketServer {
 
         tokio::task::spawn(async move {
             while let Some((connection_id, subscribe_request)) = subscribe_receiver.next().await {
+                debug!("Processing subscription request on {} for connection {}", subscribe_request.data_type.clone(), connection_id);
+
                 let mut subscriptions = subscriptions.write().await;
                 let subscription_key: SubscriptionKey = (subscribe_request.game_id.clone(), subscribe_request.data_type.clone());
 
@@ -170,7 +177,7 @@ impl SocketServer {
 
         tokio::task::spawn(async move {
             while let Some(update) = update_receiver.next().await {
-                debug!("Update received for {}", update.data_type.clone());
+                debug!("Update received for {}. Sending to {}", update.data_type.clone(), connection_id.clone());
 
                 if let Err(e) = client_sender.send(Message::text(Self::get_update_json(&update).to_string())).await {
                     error!("Error sending update to client {}: {:?}", connection_id, e);

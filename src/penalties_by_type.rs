@@ -36,7 +36,7 @@ impl PenaltiesByType {
         socket_server.register_update_provider(&"PenaltiesByType".to_string(), penalties_by_type.clone()).await;
 
         tokio::task::spawn(async move {
-            for state_update in receiver.iter() {
+            while let Ok(state_update) = receiver.recv().await {
                 let mut locked_penalties = penalties_by_type.lock().await;
 
                 let update_game_ids = locked_penalties.process_state_update(state_update);

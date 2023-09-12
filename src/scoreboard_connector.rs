@@ -1,12 +1,11 @@
-use std::sync::{Mutex, Arc};
+use std::collections::HashMap;
 use std::{thread, net::TcpStream};
 
-use bus::{Bus, BusReader};
-
-use log::{debug, info, warn};
+use log::{debug, info, warn, trace};
 use serde::{Serialize, Deserialize};
-use serde_json::{json, Value, Map};
+use serde_json::{json, Value};
 
+use tokio::sync::broadcast::{self, Sender, Receiver};
 use websocket::OwnedMessage;
 use websocket::{
     ClientBuilder,
@@ -14,7 +13,7 @@ use websocket::{
     Message
 };
 
-pub type ScoreboardState = Map<String, Value>;
+pub type ScoreboardState = HashMap<String, Value>;
 
 struct ScoreboardStateStore {
     pub state: ScoreboardState,
@@ -27,7 +26,7 @@ pub struct ScoreboardStateUpdate {
 
 pub struct ScoreboardConnection {
     socket_writer: Writer<TcpStream>,
-    bus: Arc<Mutex<Bus<ScoreboardState>>>,
+    state_sender: Sender<ScoreboardState>,
 }
 
 impl ScoreboardConnection {
@@ -39,12 +38,14 @@ impl ScoreboardConnection {
             .connect_insecure().unwrap()
             .split().unwrap();
 
+        let (state_sender, _) = broadcast::channel(100);
+        let thread_sender = state_sender.clone();
+
         let connection = ScoreboardConnection {
             socket_writer: sender,
-            bus: Arc::new(Mutex::new(Bus::new(100))),
+            state_sender,
         };
 
-        let thread_bus = connection.bus.clone();
         thread::spawn(move || {
             let mut state = ScoreboardStateStore::new();
 
@@ -52,7 +53,7 @@ impl ScoreboardConnection {
                 match message {
                     Ok(m) => {
                         state.handle_message(m);
-                        thread_bus.lock().unwrap().broadcast(state.state.clone());
+                        thread_sender.send(state.state.clone()).unwrap();
                     },
                     _ => {}
                 };
@@ -75,8 +76,8 @@ impl ScoreboardConnection {
         self.socket_writer.send_message(&Message::text(message_json.to_string())).unwrap();
     }
 
-    pub fn get_receiver(&mut self) -> BusReader<ScoreboardState> {
-        self.bus.lock().unwrap().add_rx()
+    pub fn get_receiver(&mut self) -> Receiver<ScoreboardState> {
+        self.state_sender.subscribe()
     }
 }
 
@@ -84,7 +85,7 @@ impl ScoreboardStateStore {
 
     pub fn new() -> ScoreboardStateStore {
         ScoreboardStateStore {
-            state: Map::new()
+            state: HashMap::new()
         }
     }
 
@@ -100,7 +101,7 @@ impl ScoreboardStateStore {
         let update: ScoreboardStateUpdate = serde_json::from_str(message_text.as_str()).unwrap();
 
         for (key, value) in update.state {
-            debug!("State update received for {}", key);
+            trace!("State update received for {}", key);
             
             self.state.insert(key, value);
         }

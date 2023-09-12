@@ -14,7 +14,7 @@ use crate::penalties_by_type::PenaltiesByType;
 
 #[derive(Parser, Debug)]
 struct CommandLineArguments {
-    #[arg(short = 'U', long = "scoreboardUrl")]
+    #[arg(short = 'u', long = "scoreboardUrl", default_value_t = ("localhost:8000".to_string()))]
     scoreboard_url: String,
 
     #[arg(short = 'p', long = "hostPort", default_value_t = 8001)]
