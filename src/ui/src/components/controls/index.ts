@@ -1,3 +1,3 @@
-export { ContentsTree } from './ContentsTree';
+export * from './ContentsList';
 export { CumulativeScoreGraph } from './CumulativeScoreGraph';
-export { TeamPenaltiesChart } from './TeamPenaltiesChart';
+export { TeamPenaltyShareByTypeChart } from './TeamPenaltyShareByTypeChart';

@@ -1,1 +1,0 @@
-export { CumulativeScoreTab } from './CumulativeScoreTab';

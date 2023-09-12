@@ -7,8 +7,6 @@ export const useStateSocket = <TState>(stateType: string, onUpdate: (state: TSta
     const [searchParams] = useSearchParams();
 
     useEffect(() => {
-        console.log('Mount');
-
         const socket = new WebSocket(`ws://${location.hostname}:8001/ws`);
 
         const gameId = searchParams.get('gameId');
@@ -26,7 +24,6 @@ export const useStateSocket = <TState>(stateType: string, onUpdate: (state: TSta
         });
 
         return () => {
-            console.log('Unmount');
             socket.close();
         };
     }, [...(dependencies || [])])

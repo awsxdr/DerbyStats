@@ -1,0 +1,1 @@
+export { TeamPenaltyShareByTypeChart } from './TeamPenaltyShareByTypeChart';
