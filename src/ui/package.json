@@ -12,6 +12,7 @@
   "dependencies": {
     "@blueprintjs/core": "^5.2.1",
     "@blueprintjs/icons": "^5.1.5",
+    "@blueprintjs/select": "^5.0.10",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.15.0",

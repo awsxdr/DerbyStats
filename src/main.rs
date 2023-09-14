@@ -3,6 +3,7 @@ mod socket_server;
 mod cumulative_score;
 mod penalties_by_type;
 mod jammer_stats;
+mod game_info;
 
 use clap::Parser;
 use cumulative_score::CumulativeScore;
@@ -11,7 +12,7 @@ use simplelog::{CombinedLogger, TermLogger, Config, TerminalMode, ColorChoice};
 use socket_server::SocketServer;
 use log::{info, LevelFilter};
 
-use crate::{penalties_by_type::PenaltiesByType, jammer_stats::JammerStats};
+use crate::{penalties_by_type::PenaltiesByType, jammer_stats::JammerStats, game_info::GameInfo};
 
 #[derive(Parser, Debug)]
 
@@ -50,6 +51,7 @@ async fn main() {
     CumulativeScore::new(&mut scoreboard_connection, &mut server).await;
     PenaltiesByType::new(&mut scoreboard_connection, &mut server).await;
     JammerStats::new(&mut scoreboard_connection, &mut server).await;
+    GameInfo::new(&mut scoreboard_connection, &mut server).await;
 
     server.listen(arguments.host_port).await;
 }

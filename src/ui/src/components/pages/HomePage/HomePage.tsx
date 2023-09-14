@@ -3,7 +3,7 @@ import styles from './HomePage.module.scss';
 import { Button, Classes, Drawer, DrawerSize, Navbar, NavbarHeading, TabId } from '@blueprintjs/core';
 import { useDarkThemeContext } from '../../../contexts/';
 import { useState } from 'react';
-import { ContentsList, GraphTabIds, GraphTabs } from '../../controls';
+import { ContentsList, GamesList, GraphTabIds, GraphTabs } from '../../controls';
 import { useSearchParams } from 'react-router-dom';
 
 export const HomePage = () => {
@@ -31,6 +31,7 @@ export const HomePage = () => {
                     <Button className="bp5-minimal" icon={useDarkTheme ? 'flash' : 'moon'} onClick={() => setUseDarkTheme(!useDarkTheme)} />
                 </Navbar.Group>
             </Navbar>
+            <GamesList />
             <div className={styles.bodyContainer}>
                 {
                     GraphTabs.get(selectedTabId)?.component() || <>Unrecognized graph</>
