@@ -98,6 +98,8 @@ impl ScoreboardStateStore {
             }
         };
 
+        trace!("Update received: {}", message_text);
+
         let update: ScoreboardStateUpdate = serde_json::from_str(message_text.as_str()).unwrap();
 
         for (key, value) in update.state {

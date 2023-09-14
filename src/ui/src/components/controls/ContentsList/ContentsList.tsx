@@ -2,16 +2,19 @@ import { Tab, TabId, Tabs } from "@blueprintjs/core";
 import { ReactNode } from "react";
 import { CumulativeScoreGraph, TeamPenaltyShareByTypeChart } from "..";
 import { TeamPenaltyCountByTypeGraph } from "../TeamPenaltyCountByTypeGraph/TeamPenaltyCountByTypeGraph";
+import { JamCountByJammerGraph } from "../JamCountByJammerGraph/JamCountByJammerGraph";
 
 export enum GraphTabIds {
     CumulativeScore,
     TeamPenaltyShareByType,
     TeamPenaltyCountByType,
+    JamCountByJammer,
 }
 
 enum Sections {
     Scores = "Scores",
     Penalties = "Penalties",
+    Jammers = "Jammers",
 }
 
 type TabMapEntry = {
@@ -23,7 +26,8 @@ type TabMapEntry = {
 export const GraphTabs = new Map<GraphTabIds, TabMapEntry>([
     [GraphTabIds.CumulativeScore, { title: "Cumulative score", section: Sections.Scores, component: () => (<CumulativeScoreGraph />) }],
     [GraphTabIds.TeamPenaltyShareByType, { title: "Team penalty share by type", section: Sections.Penalties, component: () => (<TeamPenaltyShareByTypeChart />)}],
-    [GraphTabIds.TeamPenaltyCountByType, { title: "Team penalty count by type", section: Sections.Penalties, component: () => (<TeamPenaltyCountByTypeGraph />)}]
+    [GraphTabIds.TeamPenaltyCountByType, { title: "Team penalty count by type", section: Sections.Penalties, component: () => (<TeamPenaltyCountByTypeGraph />)}],
+    [GraphTabIds.JamCountByJammer, { title: "Jam count by jammer", section: Sections.Jammers, component: () => (<JamCountByJammerGraph />)}],
 ]);
 
 interface IContentsListProps {

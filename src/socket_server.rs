@@ -1,7 +1,7 @@
 use std::{sync::{Arc, atomic::{AtomicUsize, Ordering}}, collections::HashMap};
 
 use futures_util::{SinkExt, StreamExt};
-use log::{info, error, trace, debug};
+use log::{error, trace, debug};
 use serde::{Serialize, Deserialize};
 use serde_json::{Value, json};
 use tokio::sync::{mpsc, RwLock, Mutex};
@@ -131,7 +131,7 @@ impl SocketServer {
     async fn socket_connected(websocket: WebSocket, connections: Connections, subscriptions: Subscriptions, update_providers: UpdateProviders) {
         let connection_id = NEXT_CONNECTION_ID.fetch_add(1, Ordering::Relaxed);
 
-        info!("New client connected and assigned ID: {}", connection_id);
+        debug!("New client connected and assigned ID: {}", connection_id);
 
         let (mut client_sender, mut client_receiver) = websocket.split();
 
@@ -199,7 +199,7 @@ impl SocketServer {
             Self::handle_socket_message(connection_id, message, &subscribe_sender).await;
         }
 
-        info!("Connection {} disconnected", connection_id);
+        debug!("Connection {} disconnected", connection_id);
     }
 
     fn get_update_json(update: &Update) -> Value {

@@ -132,6 +132,7 @@ impl PenaltiesByType {
             ("I".to_string(), 0),
             ("L".to_string(), 0),
             ("M".to_string(), 0),
+            ("N".to_string(), 0),
             ("O".to_string(), 0),
             ("P".to_string(), 0),
             ("X".to_string(), 0),
