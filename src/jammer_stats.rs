@@ -13,6 +13,7 @@ use crate::{socket_server::{UpdateProvider, Update, SocketServer}, scoreboard_co
 struct JammerScoreMatches {
     game: String,
     jam: u32,
+    period: u8,
     team: u8,
     score: u64,
 }
@@ -21,6 +22,7 @@ struct JammerScoreMatches {
 struct JammerSkaterMatches {
     game: String,
     jam: u32,
+    period: u8,
     team: u8,
     skater_id: String,
 }
@@ -54,8 +56,8 @@ struct JammerInfo {
     #[serde(rename = "totalScore")]
     total_score: u64,
 
-    #[serde(rename = "meanNetPerJam")]
-    mean_net_per_jam: f32,
+    #[serde(rename = "netScore")]
+    net_score: i64,
 
     #[serde(rename = "leadCount")]
     lead_count: u32,
@@ -77,9 +79,7 @@ pub struct JammerStats {
     skater_name_regex: Regex,
 }
 
-
 impl JammerStats {
-
     pub async fn new(scoreboard: &mut ScoreboardConnection, socket_server: &mut SocketServer) {
         let jammer_stats = Arc::new(Mutex::new(JammerStats { 
             game_states: HashMap::new(),
@@ -144,14 +144,17 @@ impl JammerStats {
         for game_id in stats_by_game.keys() {
             let game_stats = stats_by_game.get(game_id).unwrap();
 
-            let skater_names = game_stats.iter()
+            let skater_names: Vec<SkaterNameMatches> = game_stats.iter()
                 .filter_map(|m| {
                     if let Match::SkaterName(s) = *m.clone() { 
                         Some(s) 
                     } else { 
                         None 
                     } 
-                });
+                })
+                .collect();
+
+            debug!("Found {} skaters for game {}", skater_names.len(), game_id);
 
             struct JamInfo {
                 jammer_id: String,
@@ -171,8 +174,8 @@ impl JammerStats {
                 })
                 .fold(HashMap::new(), |mut map, m| {
                     let key = match m.clone() {
-                        Match::JammerScore(jammer_score) => (jammer_score.jam, jammer_score.team),
-                        Match::JammerSkater(skater) => (skater.jam, skater.team),
+                        Match::JammerScore(jammer_score) => (jammer_score.period, jammer_score.jam, jammer_score.team),
+                        Match::JammerSkater(skater) => (skater.period, skater.jam, skater.team),
                         _ => panic!("Unexpected state type")
                     };
 
@@ -190,26 +193,37 @@ impl JammerStats {
                     map
                 });
 
-            let jammer_stats: Vec<JammerInfo> = skater_names
+            let jammer_stats: Vec<JammerInfo> = skater_names.iter()
                 .map(|skater| {
-                    let skater_jam_stats: Vec<(&u32, &JamInfo)> = jam_stats.iter()
-                        .filter_map(|((jam_number, _), jam)| {
+                    let skater_jam_stats: Vec<(&u8, &u32, &u8, &JamInfo)> = jam_stats.iter()
+                        .filter_map(|((period_number, jam_number, team), jam)| {
                             if jam.jammer_id.eq(&skater.skater_id) {
-                                Some((jam_number, jam))
+                                Some((period_number, jam_number, team, jam))
                             } else {
                                 None
                             }
                         })
                         .collect();
 
-                    debug!("Found {} jam stats for skater {} in game {}", skater_jam_stats.len(), skater.name, game_id);
+                    let jammer_score = skater_jam_stats.iter()
+                        .filter(|(_, _, team, _)| skater.team == **team)
+                        .fold(0, |score, (_, _, _, jam)| score + jam.score);
 
+                    let jammer_net_score = skater_jam_stats.iter()
+                        .fold(0, |score, (_, _, team, jam)| {
+                            if skater.team == **team {
+                                score + jam.score as i64
+                            } else {
+                                score - jam.score as i64
+                            }
+                        });
+                    
                     JammerInfo {
                         name: skater.name.clone(),
                         team: skater.team,
                         jam_count: skater_jam_stats.len(),
-                        total_score: skater_jam_stats.iter().fold(0, |score, (_, jam)| score + jam.score),
-                        mean_net_per_jam: 0.0, /* TODO */
+                        total_score: jammer_score,
+                        net_score: jammer_net_score,
                         lead_count: 0, /* TODO */
                         mean_time_to_initial: 0.0, /* TODO */
                     }
@@ -226,23 +240,25 @@ impl JammerStats {
     fn get_relevant_states(&self, (key, value): (&String, &Value)) -> Option<Match> {
         if self.jam_score_regex.is_match(key) {
             self.jam_score_regex.captures(key).map(|c| {
-                let (_, [game, _period, jam, team]) = c.extract();
+                let (_, [game, period, jam, team]) = c.extract();
                 Match::JammerScore(
                     JammerScoreMatches {
                         game: game.to_string(),
                         jam: jam.parse::<u32>().unwrap(),
+                        period: period.parse::<u8>().unwrap(),
                         team: team.parse::<u8>().unwrap(),
                         score: value.as_u64().unwrap()
                     })
             })                    
         } else if self.jam_skater_regex.is_match(key) {
             self.jam_skater_regex.captures(key).map(|c| {
-                let (_, [game, _period, jam, team]) = c.extract();
+                let (_, [game, period, jam, team]) = c.extract();
 
                 Match::JammerSkater(
                     JammerSkaterMatches {
                         game: game.to_string(),
                         jam: jam.parse::<u32>().unwrap(),
+                        period: period.parse::<u8>().unwrap(),
                         team: team.parse::<u8>().unwrap(),
                         skater_id: value.as_str().unwrap().to_string(),
                     })

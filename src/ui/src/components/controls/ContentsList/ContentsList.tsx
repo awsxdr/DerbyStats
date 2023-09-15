@@ -3,12 +3,14 @@ import { ReactNode } from "react";
 import { CumulativeScoreGraph, TeamPenaltyShareByTypeChart } from "..";
 import { TeamPenaltyCountByTypeGraph } from "../TeamPenaltyCountByTypeGraph/TeamPenaltyCountByTypeGraph";
 import { JamCountByJammerGraph } from "../JamCountByJammerGraph/JamCountByJammerGraph";
+import { NetScoreByJammerGraph } from "../NetScoreByJammerGraph";
 
 export enum GraphTabIds {
     CumulativeScore,
     TeamPenaltyShareByType,
     TeamPenaltyCountByType,
     JamCountByJammer,
+    NetScoreByJammer,
 }
 
 enum Sections {
@@ -28,6 +30,7 @@ export const GraphTabs = new Map<GraphTabIds, TabMapEntry>([
     [GraphTabIds.TeamPenaltyShareByType, { title: "Team penalty share by type", section: Sections.Penalties, component: () => (<TeamPenaltyShareByTypeChart />)}],
     [GraphTabIds.TeamPenaltyCountByType, { title: "Team penalty count by type", section: Sections.Penalties, component: () => (<TeamPenaltyCountByTypeGraph />)}],
     [GraphTabIds.JamCountByJammer, { title: "Jam count by jammer", section: Sections.Jammers, component: () => (<JamCountByJammerGraph />)}],
+    [GraphTabIds.NetScoreByJammer, { title: "Net score by jammer", section: Sections.Jammers, component: () => (<NetScoreByJammerGraph />)}],
 ]);
 
 interface IContentsListProps {

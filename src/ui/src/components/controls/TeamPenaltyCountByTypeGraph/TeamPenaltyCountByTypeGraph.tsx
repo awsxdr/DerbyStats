@@ -1,12 +1,12 @@
-import { Label, LineChart, Line, XAxis, YAxis, Tooltip, ReferenceLine, BarChart, Bar } from 'recharts';
+import { Label, XAxis, YAxis, Tooltip, BarChart, Bar } from 'recharts';
 
 import { useDarkThemeContext } from '../../../contexts/';
 import { GraphContainer } from '../../atoms/GraphContainer/GraphContainer';
 import { useState } from 'react';
 import { useStateSocket } from '../../../hooks';
-import { IIndexer, PenaltyCounts } from '../../../commonTypes';
+import { PenaltyCounts } from '../../../commonTypes';
 
-class CountsByTeam implements IIndexer<number, PenaltyCounts> {
+class CountsByTeam {
     1: PenaltyCounts;
     2: PenaltyCounts;
 

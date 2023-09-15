@@ -1,4 +1,5 @@
 export * from './ContentsList';
+export * from './CumulativeScoreGraph';
 export * from './GamesList';
-export { CumulativeScoreGraph } from './CumulativeScoreGraph';
-export { TeamPenaltyShareByTypeChart } from './TeamPenaltyShareByTypeChart';
+export * from './JamCountByJammerGraph';
+export * from './TeamPenaltyShareByTypeChart';

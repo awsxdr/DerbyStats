@@ -1,6 +1,4 @@
-import { IIndexer } from ".";
-
-export class PenaltyCounts implements IIndexer<string, number> {
+export class PenaltyCounts {
     A: number;
     B: number;
     D: number;

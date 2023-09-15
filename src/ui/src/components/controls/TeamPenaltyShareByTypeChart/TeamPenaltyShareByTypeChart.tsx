@@ -3,9 +3,9 @@ import { GraphContainer } from '../../atoms/GraphContainer/GraphContainer';
 import { useState } from 'react';
 import { useStateSocket } from '../../../hooks';
 import { PenaltyLine } from '../../atoms';
-import { IIndexer, PenaltyCounts } from '../../../commonTypes';
+import { PenaltyCounts } from '../../../commonTypes';
 
-class CountsByTeam implements IIndexer<number, PenaltyCounts> {
+class CountsByTeam {
     1: PenaltyCounts;
     2: PenaltyCounts;
 

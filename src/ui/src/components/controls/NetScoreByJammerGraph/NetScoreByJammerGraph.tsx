@@ -10,7 +10,7 @@ type JammerInfo = {
     team: number,
     jamCount: number,
     totalScore: number,
-    meanNetPerJam: number,
+    netScore: number,
     leadCount: number,
     meanTimeToInitial: number,
 }
@@ -24,40 +24,40 @@ type JammerStatsUpdate = {
     body: UpdateBody;
 };
 
-type JamCounts = {
+type NetScore = {
     name: string,
     team: number,
-    count: number,
+    score: number,
 }
 
-export const JamCountByJammerGraph = () => {
+export const NetScoreByJammerGraph = () => {
 
     const { useDarkTheme } = useDarkThemeContext();
-    const [jamCountsByJammer, setJamCountsByJammer] = useState<JamCounts[]>([]);
+    const [netScoreByJammer, setNetScoreByJammer] = useState<NetScore[]>([]);
 
     useStateSocket<JammerStatsUpdate>("JammerStats", update => {
-        setJamCountsByJammer(
+        setNetScoreByJammer(
             update.body.jammers.map(j => ({ 
                 name: j.name,
                 team: j.team,
-                count: j.jamCount
+                score: j.netScore
             }))
-            .sort((a, b) => b.count - a.count)
+            .sort((a, b) => b.score - a.score)
             .sort((a, b) => a.team - b.team)
         );
-    }, [setJamCountsByJammer]);
+    }, [setNetScoreByJammer]);
 
     const team1Color = useDarkTheme ? '#ffddaa' : '#ff4400';
 
     return (
         <GraphContainer aspectRatio={.5}>
-            <BarChart data={jamCountsByJammer} layout="vertical" barCategoryGap={1}>
+            <BarChart data={netScoreByJammer} layout="vertical" barCategoryGap={1}>
                 <XAxis type="number" />
                 <YAxis type="category" dataKey="name" />
                 <Tooltip />
-                <Bar dataKey="count" name="White">
+                <Bar dataKey="score" name="White">
                     {
-                        jamCountsByJammer.map((count, index) => (
+                        netScoreByJammer.map((count, index) => (
                             <Cell key={`cell-${index}`} fill={count.team === 1 ? team1Color : '#0b2'} />
                         ))
                     }
