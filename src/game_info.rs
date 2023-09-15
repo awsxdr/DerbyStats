@@ -23,6 +23,9 @@ struct Game {
     #[serde(rename = "id")]
     pub id: String,
 
+    #[serde(rename = "startTime")]
+    pub start_time: u64,
+
     #[serde(rename = "isCurrent")]
     pub is_current: bool,
 
@@ -37,6 +40,7 @@ impl Game {
     pub fn new(id: String) -> Game {
         Game {
             id,
+            start_time: 0,
             is_current: false,
             home_team: Team {
                 name: "".to_string(),
@@ -54,12 +58,14 @@ pub struct GameInfo {
     games: Vec<Game>,
     current_game_regex: Regex,
     team_regex: Regex,
+    period_start_regex: Regex,
 }
 
 #[derive(Clone)]
 enum Match {
     CurrentGame(CurrentGameMatches),
     Team(TeamMatches),
+    PeriodStart(PeriodStartMatches),
 }
 
 #[derive(Clone)]
@@ -75,12 +81,19 @@ struct TeamMatches {
     value: String,
 }
 
+#[derive(Clone)]
+struct PeriodStartMatches {
+    game_id: String,
+    start_time: u64,
+}
+
 impl GameInfo {
     pub async fn new(scoreboard: &mut ScoreboardConnection, socket_server: &mut SocketServer) {
         let game_info = Arc::new(Mutex::new(GameInfo { 
             games: Vec::new(),
             current_game_regex: Regex::new(r#"ScoreBoard\.CurrentGame\.Game"#).unwrap(),
             team_regex: Regex::new(r#"ScoreBoard\.Game\(([^\)]+)\)\.Team\((\d+)\)\.(.+)"#).unwrap(),
+            period_start_regex: Regex::new(r#"ScoreBoard\.Game\(([^\)]+)\)\.Period\(1\)\.WalltimeStart"#).unwrap(),
         }));
 
         let mut receiver = scoreboard.get_receiver();
@@ -110,6 +123,7 @@ impl GameInfo {
         scoreboard.register_topic("ScoreBoard.CurrentGame.Game");
         scoreboard.register_topic("ScoreBoard.Game(*).Team(*).Name");
         scoreboard.register_topic("ScoreBoard.Game(*).Team(*).UniformColor");
+        scoreboard.register_topic("ScoreBoard.Game(*).Period(1).WalltimeStart");
     }
 
     fn process_state_update(&mut self, update: ScoreboardState) {
@@ -121,6 +135,7 @@ impl GameInfo {
                 let game_id = match match_info.clone() {
                     Match::CurrentGame(current_game) => current_game.game_id,
                     Match::Team(team) => team.game_id,
+                    Match::PeriodStart(period_start) => period_start.game_id,
                 };
 
                 if !map.contains_key(&game_id) {
@@ -145,7 +160,10 @@ impl GameInfo {
                             },
                             _ => { }
                         };
-                    }
+                    },
+                    Match::PeriodStart(period_start) => {
+                        game.start_time = period_start.start_time;
+                    },
                 }
 
                 map
@@ -169,6 +187,15 @@ impl GameInfo {
                     team_id: team_id.parse::<u8>().unwrap(),
                     property_name: property_name.to_string(), 
                     value: value.as_str().unwrap().to_string(),
+                })
+            })
+        } else if self.period_start_regex.is_match(key) {
+            self.period_start_regex.captures(key).map(|c| {
+                let (_, [game_id]) = c.extract();
+
+                Match::PeriodStart(PeriodStartMatches { 
+                    game_id: game_id.to_string(),
+                    start_time: value.as_u64().unwrap(),
                 })
             })
         } else {

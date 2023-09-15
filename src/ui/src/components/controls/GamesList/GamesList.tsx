@@ -14,6 +14,7 @@ type Game = {
     isCurrent: boolean,
     homeTeam: Team,
     awayTeam: Team,
+    startTime: number,
 }
 
 type GamesUpdate = {
@@ -28,7 +29,7 @@ export const GamesList = () => {
     const [selectedGame, setSelectedGame] = useState<Game>()
 
     useGlobalStateSocket<GamesUpdate>("Games", update => {
-        setGames(update.body);
+        setGames(update.body.sort((a, b) => a.isCurrent ? -1 : b.startTime - a.startTime));
 
         const game = update.body.find(({ id }) => gameId === id);
 
@@ -50,7 +51,7 @@ export const GamesList = () => {
             <MenuItem
                 active={modifiers.active}
                 disabled={modifiers.disabled}
-                key={getGameTitle(game)}
+                key={game.id}
                 label={game.isCurrent ? ' (Current)' : ''}
                 onClick={handleClick}
                 onFocus={handleFocus}
@@ -67,6 +68,7 @@ export const GamesList = () => {
                 itemRenderer={renderGame}
                 filterable={false}
                 onItemSelect={handleItemSelect}
+                activeItem={selectedGame}
             >
                 <Button text={selectedGame && getGameTitle(selectedGame)} rightIcon="double-caret-vertical" placeholder="Select game" />
             </Select>
