@@ -24,9 +24,9 @@ DerbyStats supports several options from the command line. These are:
 
 | Option                | Short form | Description |
 | --------------------- | ---------- | ----------- |
-| --scoreboardUrl       | -u         | _(Required)_ The URL of the scoreboard software to interact with. Default is 'localhost:8000' |
-| --hostPort            | -p         | The port to host DerbyStats on. Default is `8001` |
-| --logLevel            |            | The logging level to use. Valid values are 'trace', 'debug', 'info', 'warn', 'error', and 'none'. Default is 'info' |
+| `--scoreboardUrl`     | `-u`       | The URL of the scoreboard software to interact with. Default is 'localhost:8000' |
+| `--hostPort`          | `-p`       | The port to host DerbyStats on. Default is `8001` |
+| `--logLevel`          |            | The logging level to use. Valid values are 'trace', 'debug', 'info', 'warn', 'error', and 'none'. Default is 'info' |
 
 ## Building from source ##
 
