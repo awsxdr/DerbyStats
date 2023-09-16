@@ -91,9 +91,9 @@ impl GameInfo {
     pub async fn new(scoreboard: &mut ScoreboardConnection, socket_server: &mut SocketServer) {
         let game_info = Arc::new(Mutex::new(GameInfo { 
             games: Vec::new(),
-            current_game_regex: Regex::new(r#"ScoreBoard\.CurrentGame\.Game"#).unwrap(),
-            team_regex: Regex::new(r#"ScoreBoard\.Game\(([^\)]+)\)\.Team\((\d+)\)\.(.+)"#).unwrap(),
-            period_start_regex: Regex::new(r#"ScoreBoard\.Game\(([^\)]+)\)\.Period\(1\)\.WalltimeStart"#).unwrap(),
+            current_game_regex: Regex::new(r#"^ScoreBoard\.CurrentGame\.Game$"#).unwrap(),
+            team_regex: Regex::new(r#"^ScoreBoard\.Game\(([^\)]+)\)\.Team\((\d+)\)\.([^\.]+)$"#).unwrap(),
+            period_start_regex: Regex::new(r#"^ScoreBoard\.Game\(([^\)]+)\)\.Period\(1\)\.WalltimeStart$"#).unwrap(),
         }));
 
         let mut receiver = scoreboard.get_receiver();
@@ -174,7 +174,6 @@ impl GameInfo {
 
     fn get_relevant_states(&self, (key, value): (&String, &Value)) -> Option<Match> {
         if self.current_game_regex.is_match(key) {
-            debug!("Current game state update: {}", value.to_string());
             Some(Match::CurrentGame(CurrentGameMatches {
                 game_id: value.as_str().unwrap().to_string(),
             }))

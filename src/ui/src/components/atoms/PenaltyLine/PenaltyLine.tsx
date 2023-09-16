@@ -10,7 +10,7 @@ interface IPenaltyLineProps {
 
 export const PenaltyLine = ({ team1Color, team2Color, team1Count, team2Count, title}: IPenaltyLineProps) => {
 
-    const totalCount = team1Count + team2Count;
+    const totalCount = Math.max(1, team1Count + team2Count);
 
     return (
         <div className={styles.penaltyLine}>

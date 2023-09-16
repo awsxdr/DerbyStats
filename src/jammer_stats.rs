@@ -83,9 +83,9 @@ impl JammerStats {
     pub async fn new(scoreboard: &mut ScoreboardConnection, socket_server: &mut SocketServer) {
         let jammer_stats = Arc::new(Mutex::new(JammerStats { 
             game_states: HashMap::new(),
-            jam_score_regex: Regex::new(r#"ScoreBoard\.Game\(([^\)]+)\)\.Period\((\d+)\)\.Jam\((\d+)\)\.TeamJam\((\d+)\)\.JamScore"#).unwrap(),
-            jam_skater_regex: Regex::new(r#"ScoreBoard\.Game\(([^\)]+)\)\.Period\((\d+)\)\.Jam\((\d+)\)\.TeamJam\((\d+)\)\.Fielding\(Jammer\)\.Skater"#).unwrap(),
-            skater_name_regex: Regex::new(r#"ScoreBoard\.Game\(([^\)]+)\)\.Team\((\d+)\)\.Skater\(([^\)]+)\)\.Name"#).unwrap(),
+            jam_score_regex: Regex::new(r#"^ScoreBoard\.Game\(([^\)]+)\)\.Period\((\d+)\)\.Jam\((\d+)\)\.TeamJam\((\d+)\)\.JamScore$"#).unwrap(),
+            jam_skater_regex: Regex::new(r#"^ScoreBoard\.Game\(([^\)]+)\)\.Period\((\d+)\)\.Jam\((\d+)\)\.TeamJam\((\d+)\)\.Fielding\(Jammer\)\.Skater$"#).unwrap(),
+            skater_name_regex: Regex::new(r#"^ScoreBoard\.Game\(([^\)]+)\)\.Team\((\d+)\)\.Skater\(([^\)]+)\)\.Name$"#).unwrap(),
         }));
 
         let mut receiver = scoreboard.get_receiver();

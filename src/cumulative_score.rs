@@ -60,7 +60,7 @@ impl CumulativeScore {
     }
 
     fn process_state_update(&mut self, update: ScoreboardState) -> Vec<String> {
-        let total_score_regex = Regex::new(r#"ScoreBoard\.Game\(([^\)]+)\)\.Period\((\d+)\)\.Jam\((\d+)\)\.TeamJam\((\d+)\)\.TotalScore"#).unwrap();
+        let total_score_regex = Regex::new(r#"^ScoreBoard\.Game\(([^\)]+)\)\.Period\((\d+)\)\.Jam\((\d+)\)\.TeamJam\((\d+)\)\.TotalScore$"#).unwrap();
 
         debug!("Processing stats update for cumulative score");
         
