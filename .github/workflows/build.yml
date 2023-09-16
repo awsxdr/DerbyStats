@@ -18,7 +18,9 @@ jobs:
 
     - name: Build UI
       working-directory: ./src/ui
-      run: npm i & npm run build
+      run: |
+        npm ci
+        npm run build
       
 #    - name: Build
 #      run: cargo build --release --verbose
@@ -37,7 +39,9 @@ jobs:
 
     - name: Build UI
       working-directory: .\src\ui
-      run: npm i & npm run build
+      run: |
+        npm ci
+        npm run build
       
 #    - name: Build
 #      run: cargo build --release --verbose
