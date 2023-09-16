@@ -7,8 +7,8 @@ GOTO start
 IF NOT [%1] == [] CALL SET build_type=%1
 IF [%build_type%] == [] CALL SET build_type=release
 
-IF [%build_type%] == [debug] goto valid_args
-IF [%build_type%] == [release] goto valid_args
+IF [%build_type%] == [debug] GOTO valid_args
+IF [%build_type%] == [release] GOTO valid_args
 
 ECHO Usage: build [release^|debug]
 ECHO.
@@ -50,7 +50,7 @@ ECHO Finished in %elapsed_seconds%.%elapsed_milliseconds% seconds
 EXIT /B
 
 :get_time
-for /F "tokens=1-4 delims=:.," %%a in ("%time%") do (
-    set /A "calculated_time=(((%%a*60)+1%%b %% 100)*60+1%%c %% 100)*100+1%%d %% 100"
+FOR /F "tokens=1-4 delims=:.," %%a in ("%time%") DO (
+    SET /A "calculated_time=(((%%a*60)+1%%b %% 100)*60+1%%c %% 100)*100+1%%d %% 100"
 )
 EXIT /B %calculated_time%
