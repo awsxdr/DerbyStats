@@ -31,6 +31,12 @@ jobs:
         cp ./target/release/derby-stats ./build/
         cp -r ./src/ui/dist/* ./build/ui/
 
+    - name: Archive artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: build-linux-x64
+        path: ./build/**
+
   build-windows-x64:
     runs-on: windows-latest
 
@@ -51,4 +57,10 @@ jobs:
         mkdir .\build\ui\
         xcopy .\target\release\derby-stats .\build\
         xcopy .\src\ui\dist\ .\build\ui\ /E
-      
+
+    - name: Archive artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: build-windows-x64
+        path: .\build\**
+        
