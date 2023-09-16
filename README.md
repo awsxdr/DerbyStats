@@ -6,7 +6,9 @@ DerbyStats is a tool for analyzing live roller derby games for use by teams and 
 
 ## Usage ##
 
-**When builds are available they will be found in the releases section**
+**Pre-release alpha builds can be found in the 'Actions' tab**
+
+**It is not recommended to use these builds during live games**
 
 DerbyStats is run from a terminal. Open a terminal on your computer and navigate to the directory that contains DerbyStats. You can then use the following command to start the application:
 
