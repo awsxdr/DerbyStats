@@ -22,14 +22,14 @@ jobs:
         npm ci
         npm run build
       
-#    - name: Build
-#      run: cargo build --release --verbose
-#
-#    - name: Run tests
-#      run: cargo test --verbose
-#
-#    - name: Copy builds
-#      run: mkdir -p ./build/ui/ & cp ./target/release/derby-stats ./build/ & cp -r ./src/ui/dist/* ./build/ui/
+    - name: Build
+      run: cargo build --release --verbose
+
+    - name: Copy builds
+      run: |
+        mkdir -p ./build/ui/
+        cp ./target/release/derby-stats ./build/
+        cp -r ./src/ui/dist/* ./build/ui/
 
   build-windows-x64:
     runs-on: windows-latest
@@ -43,12 +43,12 @@ jobs:
         npm ci
         npm run build
       
-#    - name: Build
-#      run: cargo build --release --verbose
-#
-#    - name: Run tests
-#      run: cargo test --verbose
-#
-#    - name: Copy builds
-#      run: mkdir .\build\ui\ & xcopy .\target\release\derby-stats .\build\ & xcopy .\src\ui\dist\ .\build\ui\ /E
+    - name: Build
+      run: cargo build --release --verbose
+
+    - name: Copy builds
+      run: |
+        mkdir .\build\ui\
+        xcopy .\target\release\derby-stats .\build\
+        xcopy .\src\ui\dist\ .\build\ui\ /E
       
