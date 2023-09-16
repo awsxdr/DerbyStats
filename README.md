@@ -22,10 +22,11 @@ You can then open a web browser and navigate to `http://localhost:8001/` to view
 
 DerbyStats supports several options from the command line. These are:
 
-| Option                | Description |
-| --------------------- | ----------- |
-| --scoreboardUrl       | _(Required)_ The URL of the scoreboard software to interact with |
-| --hostPort            | The port to host DerbyStats on. Default is `8001` |
+| Option                | Short form | Description |
+| --------------------- | ---------- | ----------- |
+| --scoreboardUrl       | -u         | _(Required)_ The URL of the scoreboard software to interact with. Default is 'localhost:8000' |
+| --hostPort            | -p         | The port to host DerbyStats on. Default is `8001` |
+| --logLevel            |            | The logging level to use. Valid values are 'trace', 'debug', 'info', 'warn', 'error', and 'none'. Default is 'info' |
 
 ## Building from source ##
 
@@ -38,9 +39,8 @@ DerbyStats is built using a combination of Rust and Node. You will need both of 
 
 Once those are installed, either clone this repo with your preferred git client, or download it. Then navigate to that directory in a terminal and run 
 
-```cargo run -- --scoreboardUrl {SCOREBOARD URL}:{SCOREBOARD PORT}``` 
-
-with command line arguments as described above.
+* On Windows: `.\build.bat release`
+* On Linux: `./build.sh release`
 
 ## Contributing ##
 
