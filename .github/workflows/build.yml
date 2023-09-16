@@ -55,7 +55,7 @@ jobs:
     - name: Copy builds
       run: |
         mkdir .\build\ui\
-        xcopy .\target\release\derby-stats .\build\
+        xcopy .\target\release\derby-stats.exe .\build\
         xcopy .\src\ui\dist\ .\build\ui\ /E
 
     - name: Archive artifacts
