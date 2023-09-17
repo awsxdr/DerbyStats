@@ -32,7 +32,7 @@ DerbyStats supports several options from the command line. These are:
 
 ## Building from source ##
 
-This is currently the only way to try out DerbyStats. Remember that this is a work-in-progress and is likely to contain major bugs and missing features.
+Please remember that this project is a work-in-progress and is likely to contain major bugs and missing features. These bugs could include ones which impact the operation of the scoreboard and so use in live games is strongly discouraged at this time.
 
 DerbyStats is built using a combination of Rust and Node. You will need both of these on your system to be able to build. For instructions on how to install these, see the following:
 
