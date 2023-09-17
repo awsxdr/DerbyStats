@@ -6,25 +6,28 @@ mod jammer_stats;
 mod game_info;
 
 use clap::Parser;
-use cumulative_score::CumulativeScore;
-use scoreboard_connector::ScoreboardConnection;
 use simplelog::{CombinedLogger, TermLogger, Config, TerminalMode, ColorChoice};
-use socket_server::SocketServer;
 use log::{info, LevelFilter};
 
-use crate::{penalties_by_type::PenaltiesByType, jammer_stats::JammerStats, game_info::GameInfo};
+use crate::{
+    cumulative_score::CumulativeScore,
+    game_info::GameInfo,
+    jammer_stats::JammerStats,
+    penalties_by_type::PenaltiesByType,
+    scoreboard_connector::ScoreboardConnection,
+    socket_server::SocketServer,
+};
 
 #[derive(Parser, Debug)]
 
-#[allow(unused_parens)] // Rust incorrectly believes brackets in 'default_value_t' values aren't required. However, it does not compile if they're not present
 struct CommandLineArguments {
-    #[arg(short = 'u', long = "scoreboardUrl", default_value_t = ("localhost:8000".to_string()))]
+    #[arg(short = 'u', long = "scoreboardUrl", default_value = "localhost:8000")]
     scoreboard_url: String,
 
     #[arg(short = 'p', long = "hostPort", default_value_t = 8001)]
     host_port: u16,
 
-    #[arg(long = "logLevel", default_value_t = ("info".to_string()))]
+    #[arg(long = "logLevel", default_value = "info")]
     log_level: String,
 }
 

@@ -4,13 +4,14 @@ import { useDarkThemeContext } from '../../../contexts/';
 import { GraphContainer } from '../../atoms/GraphContainer/GraphContainer';
 import { useState } from 'react';
 import { useStateSocket } from '../../../hooks';
-import { PenaltyCounts } from '../../../commonTypes';
+
+type PenaltyCountByType = Record<string, number>;
 
 class CountsByTeam {
-    1: PenaltyCounts;
-    2: PenaltyCounts;
+    1: PenaltyCountByType;
+    2: PenaltyCountByType;
 
-    [key: number]: PenaltyCounts;
+    [key: number]: PenaltyCountByType;
 };
 
 type UpdateBody = {
@@ -25,7 +26,7 @@ type PenaltiesUpdate = {
 export const TeamPenaltyCountByTypeGraph = () => {
 
     const { useDarkTheme } = useDarkThemeContext();
-    const [penaltyCountsByTypeByTeam, setPenaltyCountsByTypeByTeam] = useState<CountsByTeam>({1: new PenaltyCounts(), 2: new PenaltyCounts()});
+    const [penaltyCountsByTypeByTeam, setPenaltyCountsByTypeByTeam] = useState<CountsByTeam>({1: { }, 2: { }});
 
     useStateSocket<PenaltiesUpdate>("PenaltiesByType", update => {
         setPenaltyCountsByTypeByTeam(update.body.penaltyCountsByTypeByTeam);
@@ -39,7 +40,7 @@ export const TeamPenaltyCountByTypeGraph = () => {
         .map(k => ({
             code: k,
             team1Count: penaltyCountsByTypeByTeam[1][k],
-            team2Count: penaltyCountsByTypeByTeam[2][k]
+            team2Count: penaltyCountsByTypeByTeam[2][k] as number
         }));
 
     return (

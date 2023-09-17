@@ -1,14 +1,12 @@
 import { Tab, TabId, Tabs } from "@blueprintjs/core";
 import { ReactNode } from "react";
-import { CumulativeScoreGraph, TeamPenaltyShareByTypeChart } from "..";
-import { TeamPenaltyCountByTypeGraph } from "../TeamPenaltyCountByTypeGraph/TeamPenaltyCountByTypeGraph";
-import { JamCountByJammerGraph } from "../JamCountByJammerGraph/JamCountByJammerGraph";
-import { NetScoreByJammerGraph } from "../NetScoreByJammerGraph";
+import { CumulativeScoreGraph, JamCountByJammerGraph, NetScoreByJammerGraph, TeamPenaltyCountByJamGraph, TeamPenaltyCountByTypeGraph, TeamPenaltyShareByTypeChart } from "..";
 
 export enum GraphTabIds {
     CumulativeScore,
     TeamPenaltyShareByType,
     TeamPenaltyCountByType,
+    TeamPenaltyCountByJam,
     JamCountByJammer,
     NetScoreByJammer,
 }
@@ -29,6 +27,7 @@ export const GraphTabs = new Map<GraphTabIds, TabMapEntry>([
     [GraphTabIds.CumulativeScore, { title: "Cumulative score", section: Sections.Scores, component: () => (<CumulativeScoreGraph />) }],
     [GraphTabIds.TeamPenaltyShareByType, { title: "Team penalty share by type", section: Sections.Penalties, component: () => (<TeamPenaltyShareByTypeChart />)}],
     [GraphTabIds.TeamPenaltyCountByType, { title: "Team penalty count by type", section: Sections.Penalties, component: () => (<TeamPenaltyCountByTypeGraph />)}],
+    [GraphTabIds.TeamPenaltyCountByJam, { title: "Team cumulative penalty count by jam", section: Sections.Penalties, component: () => (<TeamPenaltyCountByJamGraph />)}],
     [GraphTabIds.JamCountByJammer, { title: "Jam count by jammer", section: Sections.Jammers, component: () => (<JamCountByJammerGraph />)}],
     [GraphTabIds.NetScoreByJammer, { title: "Net score by jammer", section: Sections.Jammers, component: () => (<NetScoreByJammerGraph />)}],
 ]);

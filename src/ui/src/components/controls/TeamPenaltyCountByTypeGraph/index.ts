@@ -1,0 +1,1 @@
+export { TeamPenaltyCountByTypeGraph } from './TeamPenaltyCountByTypeGraph';
