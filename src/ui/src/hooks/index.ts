@@ -1,1 +1,2 @@
-export { useStateSocket } from './state-socket.js';
+export * from './state-socket';
+export * from './team-color';

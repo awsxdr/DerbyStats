@@ -1,9 +1,9 @@
 import { Label, LineChart, Line, XAxis, YAxis, Tooltip, ReferenceLine } from 'recharts';
 
-import { useDarkThemeContext } from '../../../contexts/';
-import { GraphContainer } from '../../atoms/GraphContainer/GraphContainer';
+import { useDarkThemeContext } from '@contexts';
+import { GraphContainer } from '@atoms';
 import { useState } from 'react';
-import { useStateSocket } from '../../../hooks';
+import { useStateSocket } from '@hooks';
 
 type JamScore = {
     periodNumber: number,

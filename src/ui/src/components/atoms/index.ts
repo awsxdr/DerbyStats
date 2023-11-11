@@ -1,2 +1,2 @@
-export { GraphContainer } from './GraphContainer';
-export { PenaltyLine } from './PenaltyLine';
+export * from './GraphContainer';
+export * from './PenaltyLine';

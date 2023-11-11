@@ -27,13 +27,11 @@ const subscribeToState = <TState>(stateType: string, gameId: string, onUpdate: (
 
 export const useGlobalStateSocket = <TState>(stateType: string, onUpdate: (state: TState) => void, dependencies?: React.DependencyList) => {
     useEffect(() => {
-        subscribeToState(stateType, "*", onUpdate);
+        return subscribeToState(stateType, "*", onUpdate);
     }, [...(dependencies || [])]);
 }
 
 export const useStateSocket = <TState>(stateType: string, onUpdate: (state: TState) => void, dependencies?: React.DependencyList) => {
-    //const socket = useMemo(() => new WebSocket(`ws://${location.hostname}:${location.port}/ws`), []);
-
     const [searchParams] = useSearchParams();
 
     useEffect(() => {

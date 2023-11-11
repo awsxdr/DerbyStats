@@ -123,7 +123,12 @@ impl SocketServer {
         let default_path = warp::path::end().and(warp::fs::dir(ui_path.clone()));
         let ui_files = warp::fs::dir(ui_path.clone());
 
-        let routes = websocket_path.or(default_path).or(ui_files);
+        let cors_configuration =
+            warp::cors()
+                .allow_any_origin()
+                .allow_methods(vec!["GET", "OPTIONS"]);
+
+        let routes = websocket_path.or(default_path).or(ui_files).with(cors_configuration);
 
         warp::serve(routes).run(([0, 0, 0, 0], port)).await;
     }

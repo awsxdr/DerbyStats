@@ -1,1 +1,1 @@
-export { PenaltyLine } from './PenaltyLine';
+export * from './PenaltyLine';

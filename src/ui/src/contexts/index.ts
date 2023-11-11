@@ -1,1 +1,2 @@
-export { DarkThemeContextProvider, useDarkThemeContext } from './DarkThemeContext';
+export * from './DarkThemeContext';
+export * from './GameContext';
